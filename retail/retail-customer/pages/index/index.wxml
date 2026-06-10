@@ -1,0 +1,60 @@
+<view class="page-index">
+  <!-- 顶部 Hero 区域 -->
+  <view class="hero">
+    <view class="hero-deco hero-deco-1"></view>
+    <view class="hero-deco hero-deco-2"></view>
+    <view class="hero-inner">
+      <image class="hero-logo" src="/assets/icon.jpg" mode="aspectFit"></image>
+      <text class="hero-title">智能零售</text>
+      <text class="hero-slogan">扫码即购 · 智能识别 · 便捷生活</text>
+    </view>
+  </view>
+
+  <!-- 用户卡片 / 登录引导 -->
+  <view class="user-card" wx:if="{{userInfo}}">
+    <view class="user-card-inner">
+      <image class="user-card-avatar" src="{{userInfo.avatar || '/assets/icons/user.png'}}" mode="aspectFill"></image>
+      <view class="user-card-info">
+        <text class="user-card-name">{{userInfo.nickname || userInfo.name || '用户'}}</text>
+        <view class="user-card-id-row">
+          <text class="user-card-tag">会员</text>
+          <text class="user-card-id">ID: {{userInfo.id || '-'}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-card" wx:else>
+    <view class="login-card-icon">👋</view>
+    <text class="login-card-text">登录后享受完整购物体验</text>
+    <button class="login-card-btn" bindtap="goLogin">立即登录</button>
+  </view>
+
+  <!-- 功能入口 -->
+  <view class="section-label">快捷服务</view>
+  <view class="action-grid">
+    <view class="action-item" bindtap="goScan" hover-class="action-hover">
+      <view class="action-icon-wrap">
+        <image class="action-icon" src="/assets/autoscan.png" mode="aspectFit"></image>
+      </view>
+      <text class="action-name">智能识别</text>
+      <text class="action-desc">拍照即查</text>
+    </view>
+
+    <view class="action-item" bindtap="goSearch" hover-class="action-hover">
+      <view class="action-icon-wrap">
+        <image class="action-icon" src="/assets/search.png" mode="aspectFit"></image>
+      </view>
+      <text class="action-name">商品查询</text>
+      <text class="action-desc">搜索好物</text>
+    </view>
+
+    <view class="action-item" bindtap="goCart" hover-class="action-hover">
+      <view class="action-icon-wrap">
+        <image class="action-icon" src="/assets/car.png" mode="aspectFit"></image>
+      </view>
+      <text class="action-name">购物车</text>
+      <text class="action-desc">已选物品</text>
+    </view>
+  </view>
+</view>

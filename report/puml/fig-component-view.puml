@@ -1,0 +1,58 @@
+@startuml fig-component-view
+!theme plain
+skinparam backgroundColor white
+skinparam componentStyle rectangle
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 12
+skinparam dpi 200
+
+title 零售物品智能识别系统 — 开发运行视图（组件交互图）
+
+actor "商超管理员" as Admin
+actor "小程序用户" as Customer
+
+node "前端开发机" {
+  component [retail-admin-pro\n(Vue3 + Vite + Element Plus)\n:5173] as FrontAdmin
+}
+
+node "微信平台" {
+  component [retail-customer\n(微信小程序)] as MiniApp
+}
+
+node "应用服务器" {
+  component [retail-server\n(Spring Boot 3.3 + Java 21)\n:8080] as Backend
+  component [retail-ai\n(FastAPI + Uvicorn)\n:8000] as AIService
+}
+
+database "MySQL 8.x\n(retail_db)\n:3306" as DB
+database "Redis 8.x\n:6379" as Cache
+component [USB 摄像头\n(DirectShow)] as Camera
+
+Admin --> FrontAdmin : 浏览器访问
+Customer --> MiniApp : 微信客户端
+
+FrontAdmin --> Backend : HTTP/JSON\n(Vite 代理 /api/*)
+MiniApp --> Backend : HTTPS/JSON\n(wx.request /api/applet/*)
+
+Backend --> DB : JDBC\n(MyBatis-Plus)
+Backend --> Cache : Lettuce\n(推荐流缓存)
+Backend --> AIService : HTTP/JSON\n(RestTemplate /api/ai/*)
+
+AIService --> Camera : OpenCV\n(cv2.VideoCapture)
+
+note right of Backend
+  **定时巡检**
+  CameraScanScheduler
+  每5分钟调用
+  /api/ai/recognize/shelf/batch
+end note
+
+note bottom of AIService
+  **AI 能力端点**
+  · 摄像头探测/预览/流
+  · 中心点识别 (Top-K)
+  · 批量货架识别
+  · 文本关键词检索
+end note
+
+@enduml

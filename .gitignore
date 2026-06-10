@@ -1,0 +1,87 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build output
+target/
+dist/
+build/
+out/
+*.class
+*.jar
+*.war
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.env
+venv/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+log/
+*.log
+.codex-runtime/
+
+# Uploads / runtime data
+uploads/
+dump.rdb
+*.rdb
+
+# Environment
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Large binary models
+*.pt
+*.onnx
+*.pth
+*.bin
+*.safetensors
+
+# Archives / tools (not part of the source)
+*.zip
+release/
+apache-maven-*/
+node-v*/
+Redis-*/
+mysql-*/
+jdk*/
+*-backup-*/
+.skill/
+
+# LaTeX build artifacts
+*.aux
+*.bbl
+*.bcf
+*.blg
+*.fdb_latexmk
+*.fls
+*.out
+*.run.xml
+*.synctex.gz
+*.toc
+*.xdv
+*-SAVE-ERROR
+
+# Misc
+*.rdb
+mock_data.sql
+TODO.md
+.claude/settings.local.json
+~$*.docx

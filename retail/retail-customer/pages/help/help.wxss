@@ -1,0 +1,153 @@
+.help-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: var(--bg-page);
+  box-sizing: border-box;
+}
+
+.quick-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14rpx;
+}
+
+.quick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 140rpx;
+  background: #ffffff;
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.quick-item:active {
+  background: var(--bg-page);
+}
+
+.quick-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-bottom: 14rpx;
+}
+
+.quick-item text {
+  font-size: 23rpx;
+  color: var(--text-body);
+}
+
+.section {
+  margin-top: 24rpx;
+}
+
+.section-title {
+  display: block;
+  margin: 0 4rpx 14rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.faq-card,
+.feedback-card {
+  background: #ffffff;
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.faq-card {
+  padding: 24rpx;
+  margin-bottom: 14rpx;
+}
+
+.faq-question {
+  display: block;
+  font-size: 28rpx;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.faq-answer {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.feedback-card {
+  padding: 0 24rpx 24rpx;
+}
+
+.picker-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 104rpx;
+  border-bottom: 1rpx solid var(--border);
+  font-size: 28rpx;
+  color: var(--text-title);
+}
+
+.picker-row text:last-child {
+  color: var(--text-secondary);
+}
+
+.feedback-input {
+  width: 100%;
+  height: 220rpx;
+  margin-top: 24rpx;
+  padding: 22rpx;
+  border: 1rpx solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--text-title);
+  font-size: 26rpx;
+  line-height: 1.6;
+  box-sizing: border-box;
+}
+
+.contact-input {
+  width: 100%;
+  height: 82rpx;
+  margin-top: 24rpx;
+  padding: 0 22rpx;
+  border: 1rpx solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  color: var(--text-title);
+  font-size: 26rpx;
+  box-sizing: border-box;
+}
+
+.feedback-actions {
+  display: flex;
+  gap: 18rpx;
+  margin-top: 22rpx;
+}
+
+.outline-button,
+.primary-button {
+  flex: 1;
+  margin: 0;
+  padding: 24rpx 0;
+  border-radius: var(--radius-sm);
+  font-size: 28rpx;
+  line-height: 1;
+}
+
+.outline-button::after,
+.primary-button::after {
+  border: none;
+}
+
+.outline-button {
+  border: 1rpx solid var(--brand);
+  background: #ffffff;
+  color: var(--brand);
+}
+
+.primary-button {
+  border: 1rpx solid var(--brand);
+  background: var(--brand);
+  color: #ffffff;
+}

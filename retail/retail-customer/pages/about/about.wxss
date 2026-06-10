@@ -1,0 +1,149 @@
+.about-page {
+  min-height: 100vh;
+  padding: 24rpx;
+  background: var(--bg-page);
+  box-sizing: border-box;
+}
+
+.brand-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 44rpx 32rpx;
+  background: #ffffff;
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-md);
+  text-align: center;
+}
+
+.app-logo {
+  width: 118rpx;
+  height: 118rpx;
+  border-radius: var(--radius-md);
+  margin-bottom: 22rpx;
+}
+
+.app-name {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.app-desc {
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  line-height: 1.7;
+  color: var(--text-secondary);
+}
+
+.section {
+  margin-top: 24rpx;
+}
+
+.section-title {
+  display: block;
+  margin: 0 4rpx 14rpx;
+  font-size: 26rpx;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.info-list,
+.feature-grid,
+.tag-wrap,
+.action-list {
+  background: #ffffff;
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-md);
+}
+
+.info-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 96rpx;
+  padding: 0 24rpx;
+  border-bottom: 1rpx solid var(--border);
+  font-size: 26rpx;
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-row text:first-child {
+  flex: none;
+  margin-right: 24rpx;
+  color: var(--text-body);
+}
+
+.info-row text:last-child {
+  min-width: 0;
+  color: var(--text-secondary);
+  text-align: right;
+  word-break: break-all;
+}
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rpx;
+  overflow: hidden;
+}
+
+.feature-item {
+  min-height: 94rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18rpx;
+  background: #ffffff;
+  color: var(--text-title);
+  font-size: 25rpx;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.tag-wrap {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16rpx;
+  padding: 24rpx;
+}
+
+.tech-tag {
+  padding: 14rpx 20rpx;
+  border-radius: var(--radius-sm);
+  background: var(--brand-bg);
+  color: var(--brand);
+  font-size: 24rpx;
+}
+
+.action-list {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 28rpx;
+  padding: 18rpx;
+}
+
+.action-button {
+  flex: 1;
+  margin: 0;
+  padding: 22rpx 0;
+  border: 1rpx solid var(--border-dark);
+  border-radius: var(--radius-sm);
+  background: #ffffff;
+  color: var(--text-body);
+  font-size: 26rpx;
+  line-height: 1;
+}
+
+.action-button::after {
+  border: none;
+}
+
+.action-button.primary {
+  border-color: var(--brand);
+  background: var(--brand);
+  color: #ffffff;
+}

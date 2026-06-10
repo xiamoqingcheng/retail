@@ -1,0 +1,105 @@
+/* ======== 个人中心 · 京东白色简约风 ======== */
+
+/* 头部 — 纯白 */
+.user-header {
+  position: relative;
+  padding: 48rpx 32rpx 40rpx;
+  background-color: #ffffff;
+  border-bottom: 1rpx solid var(--border);
+}
+
+.user-bg { display: none; }
+
+.user-profile { display: flex; align-items: center; }
+
+.user-avatar {
+  width: 108rpx; height: 108rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  border: 2rpx solid var(--border);
+}
+
+.user-info { flex: 1; }
+.user-name { display: block; font-size: 34rpx; font-weight: 700; color: var(--text-title); margin-bottom: 6rpx; }
+.user-id { display: block; font-size: 24rpx; color: var(--text-secondary); }
+
+/* 登录引导 */
+.login-prompt {
+  text-align: center;
+  padding: 56rpx 32rpx;
+  margin: 20rpx 24rpx;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+}
+.prompt-text { display: block; font-size: 28rpx; color: var(--text-secondary); margin-bottom: 28rpx; }
+
+/* 余额卡片 — 白底 + 细边 */
+.balance-section {
+  display: flex; align-items: center;
+  margin: 20rpx 24rpx;
+  padding: 32rpx 28rpx;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+  box-shadow: none;
+}
+.balance-item { flex: 1; text-align: center; }
+.balance-value {
+  display: block; font-size: 44rpx; font-weight: 700;
+  color: var(--brand); margin-bottom: 6rpx;
+}
+.balance-label { display: block; font-size: 24rpx; color: var(--text-secondary); }
+.balance-divider { width: 1rpx; height: 64rpx; background-color: var(--border); }
+
+/* 订单区 */
+.order-section {
+  margin: 16rpx 24rpx;
+  padding: 24rpx;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+}
+.section-header { margin-bottom: 20rpx; }
+.section-title { font-size: 30rpx; font-weight: 700; color: var(--text-title); }
+.view-all { font-size: 24rpx; color: var(--brand); font-weight: 600; }
+
+.order-types { display: flex; justify-content: space-around; }
+
+.order-type {
+  display: flex; flex-direction: column; align-items: center;
+  padding: 16rpx 24rpx; border-radius: var(--radius-sm);
+}
+.order-type:active { background: var(--bg-page); }
+
+.type-icon { width: 52rpx; height: 52rpx; margin-bottom: 12rpx; }
+.type-name { font-size: 24rpx; color: var(--text-body); font-weight: 500; }
+
+/* 菜单 */
+.menu-section {
+  margin: 0 24rpx 16rpx;
+  padding: 8rpx 0;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+}
+.menu-item {
+  padding: 32rpx 28rpx;
+  border-bottom: 1rpx solid var(--bg-page);
+}
+.menu-item:last-child { border-bottom: none; }
+.menu-item:active { background: var(--bg-page); }
+
+.menu-icon { width: 44rpx; height: 44rpx; margin-right: 18rpx; }
+
+/* 退出 */
+.logout-btn {
+  margin: 32rpx 24rpx 48rpx;
+  background-color: #ffffff;
+  color: var(--text-secondary);
+  border: 1rpx solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 28rpx;
+  box-shadow: none;
+}
+.logout-btn::after { border: none; }

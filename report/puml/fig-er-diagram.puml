@@ -1,0 +1,186 @@
+@startdot
+digraph ER {
+    /* ================================================================
+       零售物品智能识别系统 — 概念数据库设计（ER 图 · 陈氏记法）
+       严格对照 retail_db.sql，列出全部 10 张表的所有属性
+       图例：矩形=实体  椭圆=属性(PK下划线,FK虚线)  菱形=联系
+       ================================================================ */
+    graph [
+        charset="UTF-8", fontname="Microsoft YaHei", fontsize=14,
+        dpi=200, bgcolor="white", pad="0.4", nodesep=0.25, ranksep=0.7,
+        label=<零售物品智能识别系统 — 概念数据库设计（ER 图 · 陈氏记法）<BR/><FONT POINT-SIZE="10">■ 矩形=实体  ● 椭圆=属性（<U>下划线</U>=主键, 虚线=外键）  ◆ 菱形=联系  数字=基数</FONT>>,
+        labelloc=t, labelfontsize=15, labelfontname="Microsoft YaHei"
+    ];
+    node [fontname="Microsoft YaHei", fontsize=9, margin="0.08,0.04"];
+    edge [color="#888888", penwidth=1, arrowhead=none];
+
+    /* ==================== 实体（矩形） ==================== */
+    node [shape=box, style="filled,bold", fillcolor="#D6EAF8",
+          color="#2E86C1", penwidth=2, fontsize=11];
+
+    E_user     [label="sys_user\n（系统用户）"];
+    E_wxuser   [label="sys_user_wechat\n（小程序用户）"];
+    E_cat      [label="sys_goods_category\n（商品分类）"];
+    E_goods    [label="sys_goods\n（商品）"];
+    E_order    [label="sys_order\n（订单）"];
+    E_item     [label="sys_order_item\n（订单明细）"];
+    E_warn     [label="sys_warning\n（库存告警）"];
+    E_invlog   [label="sys_inventory_log\n（库存变更日志）"];
+    E_ad       [label="sys_ad\n（轮播广告）"];
+    E_camera   [label="sys_camera\n（摄像头）"];
+
+    /* ==================== 联系（菱形） ==================== */
+    node [shape=diamond, style="filled", fillcolor="#FDEBD0",
+          color="#E67E22", penwidth=2, fontsize=10, margin="0.06,0.06"];
+
+    R_belong   [label="属于"];
+    R_place    [label="下单"];
+    R_contain  [label="包含"];
+    R_purchase [label="购买"];
+    R_alert    [label="告警"];
+    R_log      [label="记录"];
+    R_monitor  [label="监控\n(逻辑)"];
+
+    /* ==================== 属性（椭圆） ==================== */
+    /* PK = 下划线, UK = (UK), FK = 虚线边框 */
+
+    /* ---------- sys_user ---------- */
+    node [shape=ellipse, style="filled", fillcolor="#FFFFFF",
+          color="#AAAAAA", penwidth=1, fontsize=8];
+    u_id       [label=<<U>id</U>>];
+    u_uname    [label="username (UK)"];
+    u_pwd      [label="password"];
+    u_role     [label="role"];
+    u_st       [label="status"];
+    u_ct       [label="create_time"];
+    u_ut       [label="update_time"];
+
+    /* ---------- sys_user_wechat ---------- */
+    w_id       [label=<<U>id</U>>];
+    w_openid   [label="openid (UK)"];
+    w_nick     [label="nickname"];
+    w_avatar   [label="avatar_url"];
+    w_bal      [label="balance"];
+    w_ct       [label="create_time"];
+    w_ut       [label="update_time"];
+
+    /* ---------- sys_goods_category ---------- */
+    c_id       [label=<<U>id</U>>];
+    c_name     [label="name (UK)"];
+    c_sort     [label="sort_order"];
+    c_st       [label="status"];
+    c_ct       [label="create_time"];
+
+    /* ---------- sys_goods ---------- */
+    g_id       [label=<<U>id</U>>];
+    g_name     [label="name"];
+    g_bar      [label="barcode"];
+    node [style="filled,dashed", color="#E67E22"];
+    g_catid    [label="category_id (FK)"];
+    node [style="filled", color="#AAAAAA"];
+    g_price    [label="price"];
+    g_stock    [label="stock"];
+    g_safe     [label="safe_stock"];
+    g_shelf    [label="shelf_id"];
+    g_img      [label="image_url"];
+    g_st       [label="status"];
+    g_ct       [label="create_time"];
+    g_ut       [label="update_time"];
+
+    /* ---------- sys_order ---------- */
+    o_id       [label=<<U>id</U>>];
+    node [style="filled,dashed", color="#E67E22"];
+    o_uid      [label="user_id (FK)"];
+    node [style="filled", color="#AAAAAA"];
+    o_total    [label="total_amount"];
+    o_st       [label="status"];
+    o_ct       [label="create_time"];
+    o_ut       [label="update_time"];
+
+    /* ---------- sys_order_item ---------- */
+    oi_id      [label=<<U>id</U>>];
+    node [style="filled,dashed", color="#E67E22"];
+    oi_oid     [label="order_id (FK)"];
+    oi_gid     [label="goods_id (FK)"];
+    node [style="filled", color="#AAAAAA"];
+    oi_gname   [label="goods_name"];
+    oi_price   [label="price"];
+    oi_qty     [label="quantity"];
+
+    /* ---------- sys_warning ---------- */
+    wn_id      [label=<<U>id</U>>];
+    node [style="filled,dashed", color="#E67E22"];
+    wn_gid     [label="goods_id (FK)"];
+    node [style="filled", color="#AAAAAA"];
+    wn_type    [label="warning_type"];
+    wn_msg     [label="warning_msg"];
+    wn_st      [label="status"];
+    wn_ct      [label="create_time"];
+    wn_rt      [label="resolve_time"];
+
+    /* ---------- sys_inventory_log ---------- */
+    il_id      [label=<<U>id</U>>];
+    node [style="filled,dashed", color="#E67E22"];
+    il_gid     [label="goods_id (FK)"];
+    node [style="filled", color="#AAAAAA"];
+    il_amt     [label="change_amount"];
+    il_stk     [label="current_stock"];
+    il_type    [label="type"];
+    il_rmk     [label="remark"];
+    il_ct      [label="create_time"];
+
+    /* ---------- sys_ad ---------- */
+    ad_id      [label=<<U>id</U>>];
+    ad_img     [label="image_url"];
+    ad_link    [label="link_url"];
+    ad_sort    [label="sort_order"];
+    ad_st      [label="status"];
+
+    /* ---------- sys_camera ---------- */
+    cam_id     [label=<<U>id</U>>];
+    cam_no     [label="camera_no (UK)"];
+    cam_shelf  [label="shelf_id"];
+    cam_st     [label="status"];
+    cam_ct     [label="create_time"];
+
+    /* ==================== 实体—属性连线 ==================== */
+    E_user -> {u_id u_uname u_pwd u_role u_st u_ct u_ut};
+    E_wxuser -> {w_id w_openid w_nick w_avatar w_bal w_ct w_ut};
+    E_cat -> {c_id c_name c_sort c_st c_ct};
+    E_goods -> {g_id g_name g_bar g_catid g_price g_stock g_safe g_shelf g_img g_st g_ct g_ut};
+    E_order -> {o_id o_uid o_total o_st o_ct o_ut};
+    E_item -> {oi_id oi_oid oi_gid oi_gname oi_price oi_qty};
+    E_warn -> {wn_id wn_gid wn_type wn_msg wn_st wn_ct wn_rt};
+    E_invlog -> {il_id il_gid il_amt il_stk il_type il_rmk il_ct};
+    E_ad -> {ad_id ad_img ad_link ad_sort ad_st};
+    E_camera -> {cam_id cam_no cam_shelf cam_st cam_ct};
+
+    /* ==================== 实体—联系连线（含基数） ==================== */
+    E_cat -> R_belong [label="1", penwidth=2, color="#2E86C1"];
+    R_belong -> E_goods [label="N", penwidth=2, color="#2E86C1"];
+
+    E_wxuser -> R_place [label="1", penwidth=2, color="#2E86C1"];
+    R_place -> E_order [label="N", penwidth=2, color="#2E86C1"];
+
+    E_order -> R_contain [label="1", penwidth=2, color="#2E86C1"];
+    R_contain -> E_item [label="N", penwidth=2, color="#2E86C1"];
+
+    E_goods -> R_purchase [label="1", penwidth=2, color="#2E86C1"];
+    R_purchase -> E_item [label="N", penwidth=2, color="#2E86C1"];
+
+    E_goods -> R_alert [label="1", penwidth=2, color="#2E86C1"];
+    R_alert -> E_warn [label="N", penwidth=2, color="#2E86C1"];
+
+    E_goods -> R_log [label="1", penwidth=2, color="#2E86C1"];
+    R_log -> E_invlog [label="N", penwidth=2, color="#2E86C1"];
+
+    E_camera -> R_monitor [label="N", penwidth=2, color="#2E86C1", style=dashed];
+    R_monitor -> E_goods [label="M", penwidth=2, color="#2E86C1", style=dashed];
+
+    /* ==================== 布局提示 ==================== */
+    {rank=same; E_user; E_wxuser; E_ad}
+    {rank=same; E_cat; E_goods; E_camera}
+    {rank=same; E_order; E_item}
+    {rank=same; E_warn; E_invlog}
+}
+@enddot

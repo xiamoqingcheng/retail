@@ -1,0 +1,225 @@
+/* ======== 搜索页 · 京东白色简约风 ======== */
+
+.search-header {
+  background-color: #ffffff;
+  padding: 20rpx 28rpx;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: 1rpx solid var(--border);
+}
+
+/* 搜索框 */
+.search-box {
+  display: flex;
+  align-items: center;
+  background-color: #F5F5F5;
+  border-radius: 20rpx;
+  padding: 14rpx 24rpx;
+  border: 2rpx solid transparent;
+}
+.search-box:focus-within {
+  border-color: var(--border-dark);
+  background-color: #FFFFFF;
+}
+
+.search-icon { width: 36rpx; height: 36rpx; margin-right: 16rpx; opacity: 0.5; }
+
+.search-input { flex: 1; font-size: 28rpx; height: 52rpx; color: var(--text-title); }
+
+.search-cancel {
+  color: var(--brand);
+  font-size: 28rpx;
+  font-weight: 600;
+  margin-left: 20rpx;
+}
+
+.content { padding: 20rpx 24rpx; }
+
+/* 筛选栏 */
+.filter-bar {
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  margin-bottom: 16rpx;
+  padding: 12rpx 0 8rpx;
+  border: 1rpx solid var(--border);
+}
+
+.filter-row { white-space: nowrap; padding: 8rpx 20rpx; }
+
+.filter-chip {
+  display: inline-block;
+  padding: 10rpx 28rpx;
+  margin-right: 14rpx;
+  font-size: 24rpx;
+  color: var(--text-body);
+  border-radius: var(--radius-pill);
+  background-color: var(--bg-page);
+  font-weight: 500;
+  border: 1rpx solid var(--border);
+}
+.filter-chip.active {
+  background-color: #ffffff;
+  color: var(--brand);
+  font-weight: 700;
+  border-color: var(--brand);
+  box-shadow: none;
+}
+
+.sort-row {
+  display: flex;
+  align-items: center;
+  padding: 10rpx 20rpx;
+  gap: 12rpx;
+}
+.sort-label { font-size: 24rpx; color: var(--text-secondary); }
+.sort-btn {
+  font-size: 24rpx;
+  color: var(--text-body);
+  padding: 8rpx 20rpx;
+  border-radius: var(--radius-pill);
+  background: transparent;
+}
+.sort-btn.active { color: var(--brand); font-weight: 700; background: none; }
+
+/* 热门/历史 */
+.hot-search, .history-search { margin-bottom: 24rpx; }
+
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  margin-bottom: 20rpx;
+  padding-left: 14rpx;
+  border-left: 6rpx solid var(--brand);
+  color: var(--text-title);
+}
+
+.section-header { margin-bottom: 20rpx; }
+
+.hot-tags, .history-tags { display: flex; flex-wrap: wrap; gap: 16rpx; }
+
+.hot-tag {
+  padding: 14rpx 28rpx;
+  background-color: var(--bg-page);
+  border-radius: var(--radius-pill);
+  font-size: 24rpx;
+  color: var(--text-body);
+  border: 1rpx solid var(--border);
+}
+
+.history-tag {
+  padding: 14rpx 28rpx;
+  background-color: var(--bg-page);
+  border-radius: var(--radius-pill);
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+.clear-history { font-size: 24rpx; color: var(--brand); }
+
+/* 分类 */
+.category-item {
+  background: #ffffff;
+  border: 1rpx solid var(--border);
+}
+.category-name { font-size: 24rpx; color: var(--text-body); }
+
+/* 搜索结果 */
+.results-count { font-size: 24rpx; color: var(--text-secondary); }
+
+.goods-list { display: flex; flex-direction: column; gap: 12rpx; }
+
+.goods-item {
+  display: flex;
+  padding: 20rpx;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+  box-shadow: none;
+}
+
+.goods-img {
+  width: 180rpx; height: 180rpx;
+  border-radius: var(--radius-sm);
+  margin-right: 20rpx;
+  background-color: var(--bg-page);
+  flex-shrink: 0;
+}
+
+.goods-info { flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+
+.goods-name {
+  font-size: 28rpx; font-weight: 600;
+  color: var(--text-title);
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; margin-bottom: 6rpx;
+}
+
+.goods-meta {
+  font-size: 22rpx; color: var(--text-secondary);
+  margin-bottom: 10rpx;
+}
+
+.goods-bottom { margin-top: auto; display: flex; justify-content: space-between; align-items: center; }
+
+.goods-actions { display: flex; gap: 8rpx; align-items: center; }
+
+.add-cart {
+  background-color: var(--brand);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+  padding: 8rpx 20rpx;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+.add-cart.confirm { background-color: var(--success); }
+
+/* 数量选择器 — 方形 */
+.quantity-selector {
+  display: flex; align-items: center;
+  border: 1rpx solid var(--border-dark);
+  border-radius: 4rpx;
+}
+.qty-btn {
+  width: 48rpx; height: 48rpx;
+  display: flex; align-items: center; justify-content: center;
+  background: #F8F8F8; font-size: 26rpx; font-weight: 700; color: var(--text-title);
+}
+.qty-value {
+  min-width: 48rpx; text-align: center; font-size: 26rpx;
+  font-weight: 600; color: var(--text-title);
+  border-left: 1rpx solid var(--border-dark);
+  border-right: 1rpx solid var(--border-dark);
+  padding: 0 8rpx;
+}
+.quantity-selector.small { transform: scale(0.88); }
+
+/* 推荐 */
+.recommendation { margin-top: 24rpx; }
+.recommend-list { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12rpx; }
+.recommend-item {
+  background: #ffffff; border-radius: var(--radius-md);
+  padding: 12rpx; border: 1rpx solid var(--border); box-shadow: none;
+  display: flex; flex-direction: column; overflow: hidden;
+}
+.recommend-img {
+  width: 100%; height: 170rpx; border-radius: var(--radius-sm);
+  margin-bottom: 10rpx; background-color: var(--bg-page); flex-shrink: 0;
+}
+.recommend-name {
+  display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2;
+  overflow: hidden; font-size: 26rpx; font-weight: 600;
+  color: var(--text-title); margin-bottom: 6rpx; line-height: 36rpx; min-height: 72rpx;
+}
+.recommend-actions { display: flex; align-items: center; justify-content: center; margin-top: auto; padding-top: 8rpx; gap: 8rpx; }
+
+.action-btn { padding: 8rpx 20rpx; border-radius: var(--radius-sm); font-size: 24rpx; font-weight: 600; }
+.action-btn.small { padding: 6rpx 16rpx; font-size: 22rpx; }
+
+/* 空状态 */
+.empty-results {
+  display: flex; flex-direction: column; align-items: center;
+  justify-content: center; min-height: 50vh; padding: 80rpx 0;
+}
+.empty-icon { width: 200rpx; height: 200rpx; margin-bottom: 24rpx; opacity: 0.45; }
+.empty-text { font-size: 28rpx; color: var(--text-secondary); }

@@ -1,0 +1,183 @@
+.page-index {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+}
+
+/* ======== Hero 顶部 ======== */
+.hero {
+  position: relative;
+  overflow: hidden;
+  padding: 60rpx 40rpx 70rpx;
+  background: linear-gradient(145deg, #FF5040 0%, #FF7849 50%, #FFAA70 100%);
+  border-radius: 0 0 60rpx 60rpx;
+  text-align: center;
+  color: #ffffff;
+}
+.hero-deco {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+}
+.hero-deco-1 { width: 260rpx; height: 260rpx; top: -80rpx; right: -50rpx; }
+.hero-deco-2 { width: 180rpx; height: 180rpx; bottom: -40rpx; left: -30rpx; background: rgba(255,255,255,0.06); }
+
+.hero-inner { position: relative; z-index: 1; }
+
+.hero-logo {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 32rpx;
+  border: 4rpx solid rgba(255,255,255,0.4);
+  box-shadow: 0 10rpx 30rpx rgba(0,0,0,0.15);
+  margin-bottom: 18rpx;
+}
+
+.hero-title {
+  display: block;
+  font-size: 48rpx;
+  font-weight: 800;
+  letter-spacing: 4rpx;
+  margin-bottom: 8rpx;
+}
+
+.hero-slogan {
+  display: block;
+  font-size: 24rpx;
+  opacity: 0.88;
+  letter-spacing: 3rpx;
+}
+
+/* ======== 用户卡片 ======== */
+.user-card {
+  margin: -36rpx 28rpx 0;
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 28rpx 32rpx;
+  box-shadow: var(--shadow-lg);
+}
+.user-card-inner {
+  display: flex;
+  align-items: center;
+}
+.user-card-avatar {
+  width: 92rpx;
+  height: 92rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  border: 3rpx solid #f0f0f0;
+  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.08);
+}
+.user-card-info { flex: 1; }
+.user-card-name {
+  display: block;
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-title);
+  margin-bottom: 6rpx;
+}
+.user-card-id-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+}
+.user-card-tag {
+  display: inline-block;
+  padding: 2rpx 14rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+  border-radius: 6rpx;
+  background: var(--brand-bg);
+  color: var(--brand);
+}
+.user-card-id {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+/* ======== 登录引导卡片 ======== */
+.login-card {
+  margin: -36rpx 28rpx 0;
+  position: relative;
+  z-index: 2;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 40rpx 32rpx;
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+}
+.login-card-icon {
+  font-size: 56rpx;
+  margin-bottom: 12rpx;
+}
+.login-card-text {
+  display: block;
+  font-size: 28rpx;
+  color: var(--text-secondary);
+  margin-bottom: 24rpx;
+}
+.login-card-btn {
+  display: inline-block;
+  background: var(--brand) !important;
+  color: #ffffff;
+  font-size: 28rpx;
+  font-weight: 600;
+  padding: 18rpx 72rpx;
+  border-radius: var(--radius-sm);
+  border: none;
+  box-shadow: 0 8rpx 24rpx rgba(228, 57, 60, 0.25);
+  letter-spacing: 2rpx;
+}
+.login-card-btn::after { border: none; }
+.login-card-btn:active { transform: scale(0.96); }
+
+/* ======== 功能网格 ======== */
+.section-label {
+  margin: 36rpx 32rpx 20rpx;
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-title);
+}
+
+.action-grid {
+  display: flex;
+  gap: 20rpx;
+  padding: 0 28rpx 32rpx;
+}
+
+.action-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 32rpx 16rpx 28rpx;
+  box-shadow: var(--shadow-md);
+}
+.action-hover { transform: scale(0.95); opacity: 0.85; }
+
+.action-icon-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16rpx;
+}
+
+.action-icon {
+  width: 80rpx;
+  height: 80rpx;
+}
+
+.action-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-title);
+  margin-bottom: 4rpx;
+}
+
+.action-desc {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}

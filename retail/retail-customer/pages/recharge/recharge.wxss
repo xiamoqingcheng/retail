@@ -1,0 +1,70 @@
+/* ======== 充值页 · 京东白色简约风 ======== */
+
+.recharge-header {
+  padding: 28rpx 32rpx;
+  text-align: center;
+  background-color: #ffffff;
+  border-bottom: 1rpx solid var(--border);
+}
+.header-title { font-size: 34rpx; font-weight: 700; }
+
+/* 余额展示 */
+.balance-info {
+  margin: 16rpx 24rpx;
+  padding: 32rpx;
+  text-align: center;
+  background: #ffffff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+}
+.balance-label { display: block; font-size: 26rpx; color: var(--text-secondary); margin-bottom: 12rpx; }
+.balance-value { font-size: 56rpx; font-weight: 700; color: var(--brand); }
+
+/* 充值金额 */
+.recharge-section { margin: 16rpx 24rpx; padding: 24rpx; }
+.section-title { display: block; font-size: 30rpx; font-weight: 600; color: var(--text-title); margin-bottom: 24rpx; }
+
+.amount-list { display: flex; flex-wrap: wrap; gap: 16rpx; margin-bottom: 24rpx; }
+
+.amount-item {
+  width: 30%; height: 96rpx;
+  display: flex; align-items: center; justify-content: center;
+  background-color: #ffffff;
+  border-radius: var(--radius-sm);
+  border: 1rpx solid var(--border);
+}
+.amount-item.selected {
+  border-color: var(--brand);
+  background-color: var(--brand-bg);
+}
+
+.amount-value { font-size: 32rpx; font-weight: 600; color: var(--text-title); }
+.amount-item.selected .amount-value { color: var(--brand); }
+
+/* 自定义金额 */
+.custom-amount { padding-top: 16rpx; border-top: 1rpx solid var(--border); }
+.custom-label { display: block; font-size: 26rpx; color: var(--text-body); margin-bottom: 12rpx; }
+.custom-input {
+  width: 100%; height: 80rpx; padding: 0 20rpx;
+  background-color: var(--bg-page); border-radius: var(--radius-sm);
+  font-size: 32rpx; border: 1rpx solid var(--border);
+}
+
+/* 充值提示 */
+.recharge-tip { margin: 16rpx 24rpx; padding: 24rpx; background: #FAFAFA; border: 1rpx solid var(--border); }
+.tip-title { display: block; font-size: 26rpx; font-weight: 600; color: var(--text-body); margin-bottom: 12rpx; }
+.tip-text { display: block; font-size: 24rpx; color: var(--text-secondary); margin-bottom: 6rpx; }
+
+/* 充值按钮 */
+.recharge-actions { padding: 24rpx 24rpx; }
+.recharge-btn {
+  width: 100%; height: 88rpx; line-height: 88rpx;
+  font-size: 32rpx; text-align: center;
+  padding: 0; margin: 0;
+  background-color: var(--brand);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+  border: none;
+  font-weight: 600;
+}
+.recharge-btn[disabled] { background-color: var(--text-placeholder); }

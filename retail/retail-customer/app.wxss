@@ -1,0 +1,174 @@
+/* ======== 设计令牌 · 京东白色简约风 ======== */
+page {
+  /* 品牌色 — 仅点缀 */
+  --brand: #E4393C;
+  --brand-bg: #FFF1F0;
+  --brand-gradient: none;
+
+  /* 功能色 */
+  --success: #52C41A;
+  --warning: #FAAD14;
+  --danger: #E4393C;
+
+  /* 背景 */
+  --bg-page: #F5F5F5;
+  --bg-card: #FFFFFF;
+
+  /* 文字层级 */
+  --text-title: #333333;
+  --text-body: #666666;
+  --text-secondary: #999999;
+  --text-placeholder: #CCCCCC;
+
+  /* 边框 */
+  --border: #F0F0F0;
+  --border-dark: #E8E8E8;
+
+  /* 圆角 — 京东小圆角 */
+  --radius-sm: 8rpx;
+  --radius-md: 12rpx;
+  --radius-lg: 12rpx;
+  --radius-pill: 8rpx;
+
+  /* 阴影 — 极轻或不使用 */
+  --shadow-sm: 0 1rpx 4rpx rgba(0,0,0,0.03);
+  --shadow-md: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  --shadow-lg: 0 2rpx 8rpx rgba(0,0,0,0.04);
+
+  font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  font-size: 28rpx;
+  color: var(--text-body);
+  background-color: var(--bg-page);
+}
+
+/* ======== 全局组件 ======== */
+
+/* 主操作按钮 — 纯色无渐变 */
+.btn-primary {
+  background-color: var(--brand);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+  padding: 22rpx 48rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  border: none;
+  box-shadow: none;
+  margin: 20rpx 0;
+  text-align: center;
+}
+.btn-primary::after { border: none; }
+.btn-primary:active { opacity: 0.85; }
+
+/* 次要按钮 — 红色描边 */
+.btn-outline {
+  background-color: #ffffff;
+  color: var(--brand);
+  border: 2rpx solid var(--brand);
+  border-radius: var(--radius-sm);
+  padding: 22rpx 48rpx;
+  font-size: 30rpx;
+}
+.btn-outline::after { border: none; }
+
+.btn-warning {
+  background-color: var(--warning);
+  color: #ffffff;
+  border-radius: var(--radius-sm);
+  padding: 22rpx 48rpx;
+  font-size: 30rpx;
+  font-weight: 600;
+  text-align: center;
+  margin: 20rpx 0;
+}
+
+/* 卡片 — 白底 + 细线边框 */
+.card {
+  background-color: #ffffff;
+  border-radius: var(--radius-md);
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  border: 1rpx solid var(--border);
+  box-shadow: none;
+}
+
+/* 布局 */
+.flex-row { display: flex; flex-direction: row; align-items: center; }
+.flex-column { display: flex; flex-direction: column; align-items: center; }
+.flex-between { display: flex; justify-content: space-between; align-items: center; }
+
+/* 文字工具 */
+.text-center { text-align: center; }
+.text-primary { color: var(--brand); }
+.text-warning { color: var(--warning); }
+.text-success { color: var(--success); }
+.text-error { color: var(--danger); }
+.text-gray { color: var(--text-secondary); }
+
+/* 价格 */
+.price {
+  color: var(--brand);
+  font-size: 36rpx;
+  font-weight: 700;
+}
+
+/* 间距 */
+.mt-10 { margin-top: 10rpx; }
+.mt-20 { margin-top: 20rpx; }
+.mb-10 { margin-bottom: 10rpx; }
+.mb-20 { margin-bottom: 20rpx; }
+
+/* 空状态 */
+.empty-state {
+  padding: 100rpx 0;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+/* ======== 图片图标通用样式 ======== */
+.empty-icon {
+  width: 200rpx;
+  height: 200rpx;
+  display: block;
+  margin: 0 auto 30rpx;
+  opacity: 0.45;
+}
+
+.type-icon {
+  width: 52rpx;
+  height: 52rpx;
+  display: block;
+  margin: 0 auto 12rpx;
+}
+
+.menu-icon {
+  width: 44rpx;
+  height: 44rpx;
+  margin-right: 18rpx;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+}
+
+/* 头像占位 */
+.user-avatar-text {
+  width: 108rpx;
+  height: 108rpx;
+  border-radius: 50%;
+  background-color: var(--text-placeholder);
+  color: #ffffff;
+  font-size: 44rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 24rpx;
+}
+
+/* 分割线 */
+.divider {
+  height: 1rpx;
+  background-color: var(--border);
+  margin: 16rpx 0;
+}

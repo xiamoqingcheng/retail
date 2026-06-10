@@ -1,0 +1,239 @@
+<view class="scan-page">
+
+  <!-- ================= 模式选择 ================= -->
+  <view class="mode-choose" wx:if="{{mode === 'choose'}}">
+    <view class="choose-header">
+      <text class="choose-title">智能识别</text>
+      <text class="choose-subtitle">请选择识别方式</text>
+    </view>
+    <view class="choose-grid">
+      <view class="choose-card camera-card" bindtap="selectCameraMode" hover-class="card-hover">
+        <view class="choose-card-icon-wrap camera-icon-bg">
+          <image class="choose-card-icon" src="/assets/autoscan.png" mode="aspectFit"></image>
+        </view>
+        <text class="choose-card-name">即拍识别</text>
+        <text class="choose-card-desc">打开摄像头实时拍照</text>
+      </view>
+      <view class="choose-card album-card" bindtap="selectAlbumMode" hover-class="card-hover">
+        <view class="choose-card-icon-wrap album-icon-bg">
+          <image class="choose-card-icon" src="/assets/autoscan.png" mode="aspectFit"></image>
+        </view>
+        <text class="choose-card-name">图片识别</text>
+        <text class="choose-card-desc">从相册选择图片识别</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- ================= 即拍识别 ================= -->
+  <view class="camera-mode" wx:if="{{mode === 'camera'}}">
+
+    <!-- 摄像头预览（仅 preview 阶段）-->
+    <camera
+      wx:if="{{captureStage === 'preview'}}"
+      class="camera-view"
+      device-position="back"
+      flash="auto"
+      binderror="onCameraError"
+    ></camera>
+
+    <!-- 已捕获的画面（result 阶段，画框叠在图上）-->
+    <view
+      class="captured-stage"
+      wx:if="{{captureStage === 'result'}}"
+      style="width:{{displayWidth || screenWidth}}px;height:{{displayHeight || screenHeight}}px;"
+    >
+      <image class="captured-image" src="{{capturedImage}}" mode="aspectFit"></image>
+      <view class="captured-overlay">
+        <block wx:for="{{detectedItems}}" wx:key="id">
+          <view
+            class="det-box"
+            style="left:{{item.boxLeft}}px;top:{{item.boxTop}}px;width:{{item.boxWidth}}px;height:{{item.boxHeight}}px;"
+          >
+            <view class="det-box-border"></view>
+            <view class="det-box-tag">{{item.boxIndex}}</view>
+          </view>
+        </block>
+      </view>
+    </view>
+
+    <!-- 顶部状态栏 -->
+    <view class="cam-topbar">
+      <view class="cam-top-btn" bindtap="exitCamera">
+        <text class="cam-top-icon">×</text>
+      </view>
+      <text class="cam-top-title">
+        {{captureStage === 'preview' ? '即拍识别' : (isDetecting ? '识别中…' : '识别结果')}}
+      </text>
+      <view class="cam-top-btn ghost"></view>
+    </view>
+
+    <!-- 底部拍照按钮（仅 preview 阶段）-->
+    <view class="cam-capture-bar" wx:if="{{captureStage === 'preview'}}">
+      <text class="capture-tip">将商品放入取景框，点击下方按钮拍照识别</text>
+      <view class="capture-btn" hover-class="capture-btn-active" bindtap="onCapture">
+        <view class="capture-btn-ring"></view>
+        <view class="capture-btn-core"></view>
+      </view>
+    </view>
+
+    <!-- 结果上拉面板 -->
+    <view
+      class="result-panel {{panelTransition ? 'with-transition' : ''}}"
+      wx:if="{{captureStage === 'result'}}"
+      style="height:{{panelHeight}}px;transform:translateY({{panelY}}px);"
+    >
+      <!-- 拖拽手柄 + 头部 -->
+      <view
+        class="panel-handle"
+        bindtouchstart="onPanelTouchStart"
+        bindtouchmove="onPanelTouchMove"
+        bindtouchend="onPanelTouchEnd"
+        bindtouchcancel="onPanelTouchEnd"
+      >
+        <view class="handle-bar"></view>
+        <view class="handle-meta">
+          <text class="handle-title">
+            {{isDetecting ? '正在识别…' : '识别到 ' + detectedItems.length + ' 个商品'}}
+          </text>
+          <text class="handle-hint">下拉收起 · 重新拍摄</text>
+        </view>
+      </view>
+
+      <!-- 滚动结果列表 -->
+      <scroll-view
+        class="panel-scroll"
+        scroll-y="true"
+        enhanced="true"
+        show-scrollbar="{{false}}"
+      >
+        <!-- 识别中占位 -->
+        <view class="panel-loading" wx:if="{{isDetecting}}">
+          <view class="capturing-spinner"></view>
+          <text class="capturing-text">正在智能识别…</text>
+          <text class="capturing-sub">已捕获图像，正在匹配商品</text>
+        </view>
+
+        <!-- 结果列表 -->
+        <block wx:elif="{{detectedItems.length > 0}}">
+          <view
+            class="result-card"
+            wx:for="{{detectedItems}}"
+            wx:key="id"
+          >
+            <view class="result-index">{{item.boxIndex}}</view>
+            <image class="result-image" src="{{item.image}}" mode="aspectFill"></image>
+            <view class="result-main">
+              <text class="result-name">{{item.name}}</text>
+              <view class="result-meta-row">
+                <view class="conf-tag">置信 {{item.confidenceText}}</view>
+                <text class="shelf-tag" wx:if="{{item.shelfId}}">货架 {{item.shelfId}}</text>
+              </view>
+              <text class="result-price">¥{{item.formattedPrice}}</text>
+            </view>
+            <view class="result-actions">
+              <view
+                class="qty-btn qty-dec {{item.count > 0 ? '' : 'qty-hidden'}}"
+                catchtap="onDecrease"
+                data-id="{{item.id}}"
+              >−</view>
+              <text class="qty-num" wx:if="{{item.count > 0}}">{{item.count}}</text>
+              <view class="qty-btn qty-inc" catchtap="onIncrease" data-id="{{item.id}}">+</view>
+            </view>
+          </view>
+        </block>
+
+        <!-- 空结果 -->
+        <view class="result-empty" wx:else>
+          <image class="result-empty-icon" src="/assets/autoscan.png" mode="aspectFit"></image>
+          <text class="result-empty-text">未识别到商品</text>
+          <text class="result-empty-hint">请下拉关闭面板重新拍摄</text>
+        </view>
+
+        <view class="scroll-bottom-spacer"></view>
+      </scroll-view>
+
+      <!-- 底部立即结算（固定在屏幕底部） -->
+      <view class="panel-footer">
+        <view class="footer-summary">
+          <text class="summary-label">已选</text>
+          <text class="summary-count">{{selectedCount}}</text>
+          <text class="summary-label">件</text>
+          <text class="summary-sep">·</text>
+          <text class="summary-price">¥{{selectedTotalText}}</text>
+        </view>
+        <view class="checkout-btn {{selectedCount === 0 ? 'disabled' : ''}}" bindtap="goSettlement">
+          立即结算
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- ================= 图片识别（保留） ================= -->
+  <view class="album-mode" wx:if="{{mode === 'album'}}">
+    <view class="album-header">
+      <view class="album-back" bindtap="backToChoose">‹ 返回</view>
+      <text class="album-title">图片识别</text>
+    </view>
+
+    <view class="album-preview" wx:if="{{uploadedImage}}">
+      <view class="album-image-wrap">
+        <image
+          class="album-image"
+          src="{{uploadedImage}}"
+          mode="widthFix"
+          bindtap="previewImage"
+        ></image>
+        <view
+          class="album-overlay"
+          style="width:{{displayWidth || imageWidth}}px;height:{{displayHeight || imageHeight}}px;"
+        >
+          <block wx:for="{{albumDetectedItems}}" wx:key="id">
+            <view
+              class="det-box"
+              style="left:{{item.boxLeft}}px;top:{{item.boxTop}}px;width:{{item.boxWidth}}px;height:{{item.boxHeight}}px;"
+            >
+              <view class="det-box-border"></view>
+              <view class="det-box-tag">{{item.boxIndex}}</view>
+            </view>
+          </block>
+        </view>
+      </view>
+
+      <view class="album-actions">
+        <view class="album-btn outline" bindtap="reupload">重新选择</view>
+      </view>
+
+      <view class="album-results">
+        <view class="album-section-title" wx:if="{{albumDetectedItems.length > 0}}">
+          识别结果（{{albumDetectedItems.length}}）
+        </view>
+        <view class="result-card" wx:for="{{albumDetectedItems}}" wx:key="id">
+          <view class="result-index">{{item.boxIndex}}</view>
+          <image class="result-image" src="{{item.image}}" mode="aspectFill"></image>
+          <view class="result-main">
+            <text class="result-name">{{item.name}}</text>
+            <view class="result-meta-row">
+              <view class="conf-tag">置信 {{item.confidenceText}}</view>
+              <text class="shelf-tag" wx:if="{{item.shelfId}}">货架 {{item.shelfId}}</text>
+            </view>
+            <text class="result-price">¥{{item.formattedPrice}}</text>
+          </view>
+          <view class="result-actions">
+            <view
+              class="qty-btn qty-dec {{item.count > 0 ? '' : 'qty-hidden'}}"
+              catchtap="onAlbumDecrease"
+              data-id="{{item.id}}"
+            >−</view>
+            <text class="qty-num" wx:if="{{item.count > 0}}">{{item.count}}</text>
+            <view class="qty-btn qty-inc" catchtap="onAlbumIncrease" data-id="{{item.id}}">+</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="album-loading" wx:if="{{isLoading}}">
+      <view class="capturing-spinner"></view>
+      <text class="capturing-text">正在识别…</text>
+    </view>
+  </view>
+</view>

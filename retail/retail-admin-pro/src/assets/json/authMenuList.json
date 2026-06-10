@@ -1,0 +1,76 @@
+{
+  "code": 200,
+  "data": [
+    {
+      "path": "/home/index",
+      "name": "home",
+      "component": "/home/index",
+      "meta": {
+        "icon": "HomeFilled",
+        "title": "首页",
+        "isLink": "",
+        "isHide": false,
+        "isFull": false,
+        "isAffix": true,
+        "isKeepAlive": true
+      }
+    },
+    {
+      "path": "/goods/manage",
+      "name": "goodsManage",
+      "component": "/goods/manage/index",
+      "meta": {
+        "icon": "Goods",
+        "title": "商品管理",
+        "isLink": "",
+        "isHide": false,
+        "isFull": false,
+        "isAffix": false,
+        "isKeepAlive": true
+      }
+    },
+    {
+      "path": "/order/manage",
+      "name": "orderManage",
+      "component": "/order/manage/index",
+      "meta": {
+        "icon": "Tickets",
+        "title": "订单管理",
+        "isLink": "",
+        "isHide": false,
+        "isFull": false,
+        "isAffix": false,
+        "isKeepAlive": true
+      }
+    },
+    {
+      "path": "/camera/schedule",
+      "name": "cameraSchedule",
+      "component": "/camera/schedule/index",
+      "meta": {
+        "icon": "Camera",
+        "title": "视觉调度",
+        "isLink": "",
+        "isHide": false,
+        "isFull": false,
+        "isAffix": false,
+        "isKeepAlive": true
+      }
+    },
+    {
+      "path": "/user/manage",
+      "name": "userManage",
+      "component": "/user/manage/index",
+      "meta": {
+        "icon": "UserFilled",
+        "title": "用户管理",
+        "isLink": "",
+        "isHide": false,
+        "isFull": false,
+        "isAffix": false,
+        "isKeepAlive": true
+      }
+    }
+  ],
+  "msg": "成功"
+}

@@ -1,0 +1,69 @@
+<view class="container">
+  <view class="cart-header flex-between">
+    <text class="header-title">购物车</text>
+    <text class="edit-btn" bindtap="toggleEdit">{{isEdit ? '完成' : '编辑'}}</text>
+  </view>
+
+  <view class="cart-content" wx:if="{{cartList.length > 0}}">
+    <view class="cart-list">
+      <view class="cart-item card" wx:for="{{cartList}}" wx:key="id" bindtap="viewDetail" data-id="{{item.id}}">
+        <view class="item-checkbox" catchtap="toggleSelect" data-id="{{item.id}}">
+          <checkbox
+            checked="{{item.selected}}"
+            color="#1890ff"
+          />
+        </view>
+
+        <image class="item-img" src="{{item.image}}" mode="aspectFill"></image>
+
+        <view class="item-info">
+          <text class="item-name">{{item.name}}</text>
+          <text class="item-price price">¥{{item.price}}</text>
+
+          <view class="item-bottom flex-between">
+            <view class="quantity-control">
+              <text class="qty-btn" catchtap="decreaseCount" data-id="{{item.id}}">-</text>
+              <text class="qty-value">{{item.count}}</text>
+              <text class="qty-btn" catchtap="increaseCount" data-id="{{item.id}}">+</text>
+            </view>
+
+            <text class="item-total">小计: ¥{{item.formattedSubtotal}}</text>
+          </view>
+        </view>
+
+        <view class="delete-btn" catchtap="deleteItem" data-id="{{item.id}}" wx:if="{{isEdit}}">
+          <text>删除</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="cart-bottom card">
+      <view class="bottom-top flex-between">
+        <checkbox-group bindchange="toggleAll">
+          <label class="select-all">
+            <checkbox checked="{{allSelected}}" color="#1890ff"/>
+            <text>全选</text>
+          </label>
+        </checkbox-group>
+
+        <view class="total-info">
+          <text class="total-label">合计:</text>
+          <text class="total-price price">¥{{totalPrice}}</text>
+        </view>
+      </view>
+
+      <view class="bottom-actions">
+        <button class="btn-primary checkout-btn" bindtap="goSettlement">
+          去结算 ({{selectedCount}})
+        </button>
+      </view>
+    </view>
+  </view>
+
+  <view class="empty-cart" wx:if="{{cartList.length === 0}}">
+    <image class="empty-icon" src="/assets/icons/cart-empty.png"></image>
+    <text class="empty-title">购物车是空的</text>
+    <text class="empty-desc">快去挑选心仪的商品吧</text>
+    <button class="btn-primary" bindtap="goShopping">去逛逛</button>
+  </view>
+</view>

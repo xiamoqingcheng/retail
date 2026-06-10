@@ -1,0 +1,152 @@
+\swjtuChapter{系统安装部署手册}
+
+% 去掉章节前缀，使用 1 / 1.1 / 1.1.1 的编号体系
+\setcounter{section}{0}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+
+\section{编写目的}
+本文档用于指导项目成员或实施人员在 Windows 环境完成系统部署，确保前后端、AI 服务、数据库与缓存服务能够按统一流程快速搭建并联调验证。
+
+\subsection{读者对象}
+\begin{itemize}[leftmargin=2em]
+  \item 项目实施工程师
+  \item 系统运维人员
+  \item 课程验收与演示准备人员
+\end{itemize}
+
+\subsection{参考资料}
+\begin{enumerate}[leftmargin=2em]
+  \item Spring Boot 官方文档
+  \item FastAPI 官方文档
+  \item 微信小程序开发者工具文档
+  \item 项目数据库脚本：\texttt{retail/retail\_db.sql}
+\end{enumerate}
+
+\section{安装部署要求}
+
+\subsection{服务器要求}
+\begin{center}
+  \renewcommand{\arraystretch}{1.35}
+  \zihao{5}
+  \begin{tabular}{|>{\centering\arraybackslash}m{2.8cm}|>{\centering\arraybackslash}m{4.2cm}|>{\centering\arraybackslash}m{5.2cm}|}
+    \hline
+    \textbf{类型} & \textbf{最低配置} & \textbf{推荐配置} \\ \hline
+    CPU & 4 核 & 8 核及以上 \\ \hline
+    内存 & 8GB & 16GB 及以上 \\ \hline
+    磁盘 & 20GB 可用空间 & 50GB SSD 可用空间 \\ \hline
+    网络 & 千兆局域网 & 千兆局域网/专线 \\ \hline
+    外设 & USB 摄像头（可选） & 高清摄像头 + 稳定光照 \\ \hline
+  \end{tabular}
+  \\[0.3em]
+  {\zihao{-5}表5-1\quad 服务器硬件要求}
+\end{center}
+
+\subsection{支撑软件安装要求}
+\begin{center}
+  \renewcommand{\arraystretch}{1.35}
+  \zihao{5}
+  \begin{tabular}{|>{\centering\arraybackslash}m{2.8cm}|>{\centering\arraybackslash}m{2.8cm}|>{\centering\arraybackslash}m{6.4cm}|}
+    \hline
+    \textbf{软件} & \textbf{版本} & \textbf{说明} \\ \hline
+    JDK & 21 & 运行 \texttt{retail-server} \\ \hline
+    Maven & 3.9+ & 构建与启动 Spring Boot \\ \hline
+    Python & 3.10+ & 运行 \texttt{retail-ai} \\ \hline
+    Node.js & 18+ & 构建/运行 \texttt{retail-admin-pro} \\ \hline
+    pnpm & 8+ & 前端依赖管理 \\ \hline
+    MySQL & 8.x & 业务数据库 \texttt{retail\_db} \\ \hline
+    Redis & 8.x & 购物车存储、Token 缓存与推荐流缓存 \\ \hline
+    微信开发者工具 & 最新版 & 运行 \texttt{retail-customer} \\ \hline
+  \end{tabular}
+  \\[0.3em]
+  {\zihao{-5}表5-2\quad 支撑软件要求}
+\end{center}
+
+\subsection{应用软件部署要求}
+\begin{itemize}[leftmargin=2em]
+  \item 开放端口：\texttt{5173}（管理端开发）、\texttt{8080}（后端）、\texttt{8000}（AI）、\texttt{3306}（MySQL）、\texttt{6379}（Redis）。
+  \item 修改后端配置文件 \texttt{retail-server/src/main/resources/application.yml} 中数据库账号密码。
+  \item 确保日志目录可写；默认日志路径为 \texttt{E:/retail/log/retail-server.log}，如不存在请提前创建或调整配置。
+\end{itemize}
+
+\section{部署方案}
+
+\subsection{环境部署}
+
+\subsubsection{步骤一：数据库初始化}
+\begin{enumerate}[leftmargin=2em]
+  \item 创建并初始化业务库：
+  \begin{itemize}[leftmargin=2em]
+    \item 执行脚本：\texttt{retail/retail\_db.sql}
+    \item 可选测试数据：\texttt{mock\_data.sql}
+  \end{itemize}
+  \item 默认管理员账号：\texttt{admin}，默认密码：\texttt{123456}。
+\end{enumerate}
+
+\subsubsection{步骤二：Redis 启动}
+可使用项目内置 Redis 目录启动（Windows）：
+\begin{itemize}[leftmargin=2em]
+  \item 启动脚本：\texttt{Redis-8.6.2-Windows-x64-msys2/Redis-8.6.2-Windows-x64-msys2/start.bat}
+\end{itemize}
+
+\subsubsection{步骤三：AI 服务部署（retail-ai）}
+\begin{enumerate}[leftmargin=2em]
+  \item 进入目录：\texttt{retail/retail-ai}
+  \item 创建虚拟环境并安装依赖：\texttt{python -m venv .venv}，\texttt{pip install -r requirements.txt}
+  \item 启动服务：\texttt{python main.py}
+  \item 启动成功后默认监听：\texttt{http://localhost:8000}
+\end{enumerate}
+
+\subsubsection{步骤四：后端服务部署（retail-server）}
+\begin{enumerate}[leftmargin=2em]
+  \item 进入目录：\texttt{retail/retail-server}
+  \item 执行启动命令：\texttt{mvn spring-boot:run}
+  \item 若系统未安装 Maven，可使用项目内 Maven：\texttt{../../apache-maven-3.9.14/bin/mvn.cmd spring-boot:run}
+  \item 启动后访问：\texttt{http://localhost:8080}
+\end{enumerate}
+
+\subsubsection{步骤五：管理端部署（retail-admin-pro）}
+\begin{enumerate}[leftmargin=2em]
+  \item 进入目录：\texttt{retail/retail-admin-pro}
+  \item 安装依赖：\texttt{pnpm install}
+  \item 启动开发服务：\texttt{pnpm dev}
+  \item 访问地址：\texttt{http://localhost:5173}
+\end{enumerate}
+
+\subsubsection{步骤六：小程序端部署（retail-customer）}
+\begin{enumerate}[leftmargin=2em]
+  \item 使用微信开发者工具导入目录：\texttt{retail/retail-customer}
+  \item 检查 \texttt{project.config.json} 的 \texttt{appid} 配置。
+  \item 检查 \texttt{app.js} 与 \texttt{utils/request.js} 中后端地址（默认 \texttt{http://localhost:8080/api}）。
+  \item 编译运行并验证登录、搜索、结算流程。
+\end{enumerate}
+
+\subsection{系统部署}
+
+\subsubsection{部署拓扑}
+系统采用“前端 + 后端 + AI + 数据库 + 缓存”分层部署：
+\begin{itemize}[leftmargin=2em]
+  \item 管理端通过 Vite 代理访问后端 \texttt{/api}。
+  \item 小程序端通过 \texttt{wx.request} 访问后端 \texttt{/api/applet/*}。
+  \item 后端通过 HTTP 调用 AI 服务 \texttt{/api/ai/*}。
+  \item 后端通过 JDBC 访问 MySQL，通过 Lettuce 访问 Redis。
+\end{itemize}
+
+\subsubsection{部署验证清单}
+建议按以下顺序验证：
+\begin{enumerate}[leftmargin=2em]
+  \item 访问 \texttt{http://localhost:8080/api/auth/login} 登录接口返回正常。
+  \item 管理端可登录并进入“商品管理”页面。
+  \item 管理端可查看“视觉调度”并触发一次巡检。
+  \item 小程序可登录并完成“搜索-加购-结算”流程。
+  \item 数据库中 \texttt{sys\_order}、\texttt{sys\_order\_item} 有新增记录。
+\end{enumerate}
+
+\subsubsection{常见故障与处理}
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{后端启动失败（数据库连接）}：检查 \texttt{application.yml} 的 \texttt{datasource} 配置与 MySQL 服务状态。
+  \item \textbf{管理端接口 401}：检查是否携带 Token，确认登录后本地缓存是否写入。
+  \item \textbf{AI 调用 502}：检查 \texttt{retail-ai} 是否在 8000 端口运行。
+  \item \textbf{摄像头不可用}：检查摄像头权限、设备占用状态及 DirectShow 驱动。
+\end{itemize}

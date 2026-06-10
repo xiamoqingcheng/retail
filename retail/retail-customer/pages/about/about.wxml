@@ -1,0 +1,47 @@
+<view class="about-page">
+  <view class="brand-panel">
+    <image class="app-logo" src="/assets/icon.jpg"></image>
+    <text class="app-name">零售物品智能识别系统</text>
+    <text class="app-desc">面向门店自助购物、智能识别和库存巡检的一体化零售应用</text>
+  </view>
+
+  <view class="section">
+    <text class="section-title">版本信息</text>
+    <view class="info-list">
+      <view class="info-row">
+        <text>小程序版本</text>
+        <text>{{versionText}}</text>
+      </view>
+      <view class="info-row">
+        <text>运行环境</text>
+        <text>{{envText}}</text>
+      </view>
+      <view class="info-row">
+        <text>服务地址</text>
+        <text>{{apiBaseUrl}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">核心能力</text>
+    <view class="feature-grid">
+      <view class="feature-item" wx:for="{{featureList}}" wx:key="*this">
+        <text>{{item}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">技术栈</text>
+    <view class="tag-wrap">
+      <view class="tech-tag" wx:for="{{techList}}" wx:key="*this">{{item}}</view>
+    </view>
+  </view>
+
+  <view class="action-list">
+    <button class="action-button primary" bindtap="goSettings">系统设置</button>
+    <button class="action-button" bindtap="goHelp">帮助反馈</button>
+    <button class="action-button" bindtap="copyVersionInfo">复制版本</button>
+  </view>
+</view>

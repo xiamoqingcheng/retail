@@ -1,0 +1,49 @@
+<view class="container">
+  <view class="recharge-header">
+    <text class="header-title">账户充值</text>
+  </view>
+
+  <view class="balance-info card">
+    <text class="balance-label">当前余额</text>
+    <text class="balance-value price">¥{{currentBalance}}</text>
+  </view>
+
+  <view class="recharge-section card">
+    <text class="section-title">选择充值金额</text>
+    <view class="amount-list">
+      <view
+        class="amount-item {{selectedAmount === item ? 'selected' : ''}}"
+        wx:for="{{amountOptions}}"
+        wx:key="index"
+        bindtap="selectAmount"
+        data-amount="{{item}}"
+      >
+        <text class="amount-value">¥{{item}}</text>
+      </view>
+    </view>
+
+    <view class="custom-amount">
+      <text class="custom-label">自定义金额</text>
+      <input
+        class="custom-input"
+        type="digit"
+        placeholder="请输入充值金额"
+        bindinput="onCustomInput"
+        value="{{customAmount}}"
+      />
+    </view>
+  </view>
+
+  <view class="recharge-tip card">
+    <text class="tip-title">充值说明</text>
+    <text class="tip-text">1. 充值金额将即时到账</text>
+    <text class="tip-text">2. 充值成功后不可提现</text>
+    <text class="tip-text">3. 如有疑问请联系客服</text>
+  </view>
+
+  <view class="recharge-actions">
+    <button class="btn-primary recharge-btn" bindtap="confirmRecharge" disabled="{{rechargeAmount <= 0}}">
+      确认充值 {{rechargeAmount > 0 ? '¥' + rechargeAmount : ''}}
+    </button>
+  </view>
+</view>

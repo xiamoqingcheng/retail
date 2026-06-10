@@ -1,0 +1,128 @@
+\swjtuChapter{系统用户操作手册}
+
+% 去掉章节前缀，使用 1 / 1.1 / 1.1.1 的编号体系
+\setcounter{section}{0}
+\renewcommand{\thesection}{\arabic{section}}
+\renewcommand{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+
+\section{商超管理员角色操作手册}
+
+\subsection{登录功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 在浏览器访问管理端首页（默认：\texttt{http://localhost:5173}）。
+  \item 输入管理员账号与密码（默认 \texttt{admin/123456}）。
+  \item 点击"登录"进入系统首页。
+\end{enumerate}
+
+异常提示：若提示"未登录或 Token 无效"，请重新登录并确认后端服务正常运行。
+
+\subsection{商品管理功能使用说明}
+进入菜单"商品管理"后，可进行以下操作：
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{查询商品}：输入商品名称关键字，点击"搜索"。
+  \item \textbf{新增商品}：点击"新增商品"，填写名称、价格、库存、货架号并上传图片后提交。
+  \item \textbf{编辑商品}：点击列表"编辑"按钮更新商品信息。
+  \item \textbf{删除商品}：点击"删除"并确认。
+\end{enumerate}
+
+操作结果：系统通过接口 \texttt{/api/goods}、\texttt{/api/upload} 返回成功消息，列表自动刷新。
+
+\subsection{视觉调度功能使用说明}
+进入菜单"视觉调度"后，可进行以下操作：
+\begin{enumerate}[leftmargin=2em]
+  \item \textbf{新增摄像头绑定}：选择物理摄像头索引并填写货架号。
+  \item \textbf{编辑绑定关系}：修改指定摄像头对应货架号。
+  \item \textbf{删除摄像头}：移除无效或停用设备。
+  \item \textbf{更新巡检参数}：设置巡检间隔（分钟）和分批大小（台）。
+  \item \textbf{手动触发巡检}：点击按钮立即执行一次全量扫描。
+\end{enumerate}
+
+建议：修改巡检参数后观察日志，确认任务已按新参数重启。
+
+\subsection{告警与看板功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 在告警列表中查看未处理库存预警。
+  \item 对已确认问题执行"处理告警"操作。
+  \item 在数据看板查看销售趋势、库存健康度与近期告警概览。
+\end{enumerate}
+
+\section{顾客角色操作手册}
+
+\subsection{登录功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 打开小程序进入"我的"页面。
+  \item 点击"登录"，授权微信用户信息。
+  \item 登录成功后，系统在本地保存 Token 与用户资料。
+\end{enumerate}
+
+说明：演示环境中小程序登录使用固定测试码 \texttt{test\_code}。
+
+\subsection{查询功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 进入"查询"页输入关键词，系统自动节流检索并展示结果。
+  \item 在筛选栏可按分类、价格区间和价格排序进一步缩小范围。
+  \item 点击商品可查看详情，或点击"加入购物车"按钮直接添加 1 件商品至购物车（无需二次确认）。
+  \item 展开的 +/- 数量控件可直接调整数量，增减操作自动同步至购物车，数量减至 0 时该商品自动移出购物车。
+\end{enumerate}
+
+提示：若返回"未找到相关商品"，可尝试更换关键词或使用图片识别。
+
+\subsection{视觉识别寻物功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 进入"识别"页，选择"拍照"或"从相册选择"。
+  \item 系统上传图片并执行 AI 识别（内置自动重试机制，弱网环境下更稳定）。
+  \item 识别结果去重展示商品名称、价格、置信度与货架编号，通过 +/- 按钮调整数量后直接同步购物车。
+\end{enumerate}
+
+异常处理：若多次重试后仍提示"识别失败"，请稍后重试或检查 AI 服务运行状态。
+
+\subsection{购物车与结算功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 在"购物车"页勾选商品并调整数量。
+  \item 点击"去结算"进入订单确认页。
+  \item 确认金额后提交结算，系统生成订单号。
+\end{enumerate}
+
+结算规则：库存不足时系统会阻止下单，并提示库存异常信息。
+
+\subsection{订单、支付与充值功能使用说明}
+\begin{enumerate}[leftmargin=2em]
+  \item 在"我的-订单"中查看历史订单与状态。
+  \item 对待付款订单进入支付页，选择余额或微信方式。
+  \item 余额不足时可进入充值页完成账户充值。
+\end{enumerate}
+
+\section{系统后台角色操作手册}
+
+\subsection{巡检任务运行说明}
+系统后台内置摄像头巡检任务，默认每 5 分钟执行一次：
+\begin{itemize}[leftmargin=2em]
+  \item 读取状态正常的摄像头列表。
+  \item 分批调用 AI 批量识别接口。
+  \item 同步识别到的商品与货架关系。
+  \item 记录任务日志并返回结果。
+\end{itemize}
+
+\subsection{参数调整与手动触发说明}
+运维人员可在管理端"视觉调度"页面完成：
+\begin{enumerate}[leftmargin=2em]
+  \item 调整巡检间隔与批次大小。
+  \item 手动触发全量巡检，用于快速复核库存陈列。
+\end{enumerate}
+
+\subsection{异常处理说明}
+\begin{itemize}[leftmargin=2em]
+  \item \textbf{AI 服务不可达}：后端返回 502，建议先恢复 \texttt{retail-ai} 后重试。AI 识别接口已内置自动重试机制，短暂恢复后可自动重连成功。
+  \item \textbf{数据库异常}：结算流程自动回滚，避免脏数据。
+  \item \textbf{摄像头占用}：释放视频流资源后重新预览。
+  \item \textbf{Token 过期}：前端清理登录态并引导重新登录。
+\end{itemize}
+
+\subsection{运维建议}
+\begin{enumerate}[leftmargin=2em]
+  \item 每日检查 \texttt{retail-server.log} 和巡检任务日志。
+  \item 每周备份 MySQL 业务库和关键配置文件。
+  \item 定期清理无效摄像头绑定与历史无效告警。
+  \item 监控 AI 服务响应延迟，及时调整识别超时与重试参数。
+\end{enumerate}

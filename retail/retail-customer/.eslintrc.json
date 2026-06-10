@@ -1,0 +1,6 @@
+{
+  "globals": {
+    "WeixinJSBridge": "readonly",
+    "define": "readonly"
+  }
+}

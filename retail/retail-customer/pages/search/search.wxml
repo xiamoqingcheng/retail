@@ -1,0 +1,110 @@
+<view class="container">
+  <view class="search-header">
+    <view class="search-box">
+      <image class="search-icon" src="/assets/icons/search-icon.png"></image>
+      <input
+        class="search-input"
+        type="text"
+        placeholder="搜索商品名称、品牌..."
+        bindinput="onSearchInput"
+        bindconfirm="onSearch"
+        bindfocus="onSearchFocus"
+        value="{{searchKey}}"
+        focus="{{searchFocus}}"
+      />
+      <text class="search-cancel" bindtap="cancelSearch" wx:if="{{searchKey}}">取消</text>
+    </view>
+  </view>
+
+  <view class="content">
+    <view class="hot-search card" wx:if="{{!searchKey && !goodsList.length && hotSearch.length > 0}}">
+      <view class="section-title">热门搜索</view>
+      <view class="hot-tags">
+        <view class="hot-tag" wx:for="{{hotSearch}}" wx:key="index" bindtap="onHotSearch" data-key="{{item}}">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="history-search card" wx:if="{{showHistory && !searchKey && historySearch.length > 0}}">
+      <view class="section-header flex-between">
+        <text class="section-title">搜索历史</text>
+        <text class="clear-history text-primary" bindtap="clearHistory">清除</text>
+      </view>
+      <view class="history-tags">
+        <view class="history-tag" wx:for="{{historySearch}}" wx:key="index" bindtap="onHistorySearch" data-key="{{item}}">{{item}}</view>
+      </view>
+    </view>
+
+    <view class="search-results" wx:if="{{goodsList.length > 0 || searchKey}}">
+      <!-- 筛选栏 -->
+      <view class="filter-bar">
+        <scroll-view class="filter-row" scroll-x>
+          <view class="filter-chip {{currentCategoryId === 0 ? 'active' : ''}}" bindtap="onCategoryTap" data-id="0">全部</view>
+          <view class="filter-chip {{currentCategoryId === item.id ? 'active' : ''}}"
+            wx:for="{{categories}}" wx:key="id" bindtap="onCategoryTap" data-id="{{item.id}}">{{item.name}}</view>
+        </scroll-view>
+        <scroll-view class="filter-row" scroll-x>
+          <view class="filter-chip {{currentPriceIdx === index ? 'active' : ''}}"
+            wx:for="{{priceRanges}}" wx:key="label" bindtap="onPriceFilterTap" data-idx="{{index}}">{{item.label}}</view>
+        </scroll-view>
+        <view class="sort-row">
+          <text class="sort-label">排序:</text>
+          <text class="sort-btn {{sortOrder === 0 ? 'active' : ''}}" bindtap="onSortTap" data-order="0">综合</text>
+          <text class="sort-btn {{sortOrder === 1 ? 'active' : ''}}" bindtap="onSortTap" data-order="1">价格↑</text>
+          <text class="sort-btn {{sortOrder === 2 ? 'active' : ''}}" bindtap="onSortTap" data-order="2">价格↓</text>
+        </view>
+      </view>
+
+      <view class="results-header">
+        <text class="results-count">
+          <block wx:if="{{searchKey}}">搜索"{{searchKey}}"：</block>
+          共 {{goodsList.length}} 件商品
+        </text>
+      </view>
+
+      <view class="goods-list" wx:if="{{goodsList.length > 0}}">
+        <view class="goods-item card" wx:for="{{goodsList}}" wx:key="id">
+          <image class="goods-img" src="{{item.image}}" mode="aspectFill" bindtap="viewGoodsDetail" data-id="{{item.id}}"></image>
+          <view class="goods-info">
+            <text class="goods-name" bindtap="viewGoodsDetail" data-id="{{item.id}}">{{item.name}}</text>
+            <text class="goods-meta">货架 {{item.shelfId || '-'}}</text>
+            <view class="goods-bottom flex-between">
+              <text class="price">¥{{item.price}}</text>
+              <view class="goods-actions">
+                <view class="quantity-selector" wx:if="{{item.showQuantitySelector}}">
+                  <text class="qty-btn" catchtap="decreaseQuantity" data-id="{{item.id}}" data-list="goodsList">-</text>
+                  <text class="qty-value">{{item.quantity || 1}}</text>
+                  <text class="qty-btn" catchtap="increaseQuantity" data-id="{{item.id}}" data-list="goodsList">+</text>
+                </view>
+                <text class="action-btn add-cart" wx:else catchtap="toggleQuantitySelector" data-id="{{item.id}}" data-list="goodsList">加入购物车</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-results" wx:if="{{goodsList.length === 0}}">
+        <image class="empty-icon" src="/assets/icons/search-empty.png"></image>
+        <text class="empty-text">未找到相关商品</text>
+      </view>
+    </view>
+
+    <view class="recommendation card" wx:if="{{!searchKey && !goodsList.length && recommendations.length > 0}}">
+      <view class="section-title">猜你喜欢</view>
+      <view class="recommend-list">
+        <view class="recommend-item" wx:for="{{recommendations}}" wx:key="id">
+          <image class="recommend-img" src="{{item.image}}" mode="aspectFill" bindtap="viewGoodsDetail" data-id="{{item.id}}"></image>
+          <text class="recommend-name" bindtap="viewGoodsDetail" data-id="{{item.id}}">{{item.name}}</text>
+          <text class="price">¥{{item.price}}</text>
+          <view class="recommend-actions">
+            <view class="quantity-selector small" wx:if="{{item.showQuantitySelector}}">
+              <text class="qty-btn" catchtap="decreaseQuantity" data-id="{{item.id}}" data-list="recommendations">-</text>
+              <text class="qty-value">{{item.quantity || 1}}</text>
+              <text class="qty-btn" catchtap="increaseQuantity" data-id="{{item.id}}" data-list="recommendations">+</text>
+            </view>
+            <text class="action-btn add-cart small" wx:else catchtap="toggleQuantitySelector" data-id="{{item.id}}" data-list="recommendations">加入</text>
+          </view>
+        </view>
+      </view>
+    </view>
+  </view>
+</view>

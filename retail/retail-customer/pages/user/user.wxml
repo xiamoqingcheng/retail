@@ -1,0 +1,79 @@
+<view class="container">
+  <view class="user-header" wx:if="{{userInfo}}">
+    <view class="user-bg"></view>
+    <view class="user-profile">
+      <view class="user-avatar-text">{{userInfo.nickname ? userInfo.nickname[0] : 'U'}}</view>
+      <view class="user-info">
+        <text class="user-name">{{userInfo.nickname || '用户'}}</text>
+        <text class="user-id">会员ID: {{userInfo.id}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="login-prompt card" wx:else>
+    <text class="prompt-text">登录后可查看个人信息</text>
+    <button class="btn-primary" bindtap="goLogin">立即登录</button>
+  </view>
+
+  <view class="balance-section card" wx:if="{{userInfo}}">
+    <view class="balance-item">
+      <text class="balance-value">¥{{userInfo.balance || '0.00'}}</text>
+      <text class="balance-label">账户余额</text>
+    </view>
+  </view>
+
+  <view class="order-section card" wx:if="{{userInfo}}">
+    <view class="section-header flex-between">
+      <text class="section-title">我的订单</text>
+      <text class="view-all text-primary" bindtap="goOrder">查看全部 ›</text>
+    </view>
+
+    <view class="order-types">
+      <view class="order-type" bindtap="goOrderByStatus" data-status="pending">
+        <image class="type-icon" src="/assets/icons/pending.png"></image>
+        <text class="type-name">待付款</text>
+      </view>
+
+      <view class="order-type" bindtap="goOrderByStatus" data-status="completed">
+        <image class="type-icon" src="/assets/icons/completed.png"></image>
+        <text class="type-name">已完成</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="menu-section card">
+    <view class="menu-item flex-between" bindtap="goRecharge">
+      <view class="menu-left">
+        <image class="menu-icon" src="/assets/icons/recharge.png"></image>
+        <text>余额充值</text>
+      </view>
+      <text class="text-gray">›</text>
+    </view>
+
+    <view class="menu-item flex-between" bindtap="goSettings">
+      <view class="menu-left">
+        <image class="menu-icon" src="/assets/icons/settings.png"></image>
+        <text>系统设置</text>
+      </view>
+      <text class="text-gray">›</text>
+    </view>
+
+    <view class="menu-item flex-between" bindtap="goHelp">
+      <view class="menu-left">
+        <image class="menu-icon" src="/assets/icons/help.png"></image>
+        <text>帮助与反馈</text>
+      </view>
+      <text class="text-gray">›</text>
+    </view>
+
+    <view class="menu-item flex-between" bindtap="goAbout">
+      <view class="menu-left">
+        <image class="menu-icon" src="/assets/icons/about.png"></image>
+        <text>关于我们</text>
+      </view>
+      <text class="text-gray">›</text>
+    </view>
+  </view>
+
+  <button class="logout-btn" wx:if="{{userInfo}}" bindtap="logout">退出登录</button>
+</view>

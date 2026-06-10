@@ -1,0 +1,64 @@
+<view class="container">
+  <view class="payment-header">
+    <text class="header-title">订单支付</text>
+  </view>
+
+  <view class="payment-content" wx:if="{{order}}">
+    <view class="order-summary card">
+      <text class="summary-title">订单信息</text>
+      <view class="summary-row">
+        <text class="summary-label">订单号</text>
+        <text class="summary-value">{{order.orderId}}</text>
+      </view>
+      <view class="summary-row">
+        <text class="summary-label">商品数量</text>
+        <text class="summary-value">{{order.goods.length}} 件</text>
+      </view>
+      <view class="summary-row total-row">
+        <text class="summary-label">应付金额</text>
+        <text class="summary-value price">¥{{order.totalPrice}}</text>
+      </view>
+    </view>
+
+    <view class="payment-methods card">
+      <text class="methods-title">选择支付方式</text>
+      
+      <view class="method-item selected" bindtap="selectMethod" data-method="balance">
+        <image class="method-icon" src="/assets/icons/balance.png" mode="aspectFit"></image>
+        <view class="method-info">
+          <text class="method-name">账户余额支付</text>
+          <text class="method-desc">当前余额: ¥{{currentBalance}}</text>
+        </view>
+        <view class="method-check">
+          <text wx:if="{{selectedMethod === 'balance'}}">✓</text>
+        </view>
+      </view>
+      
+      <view class="method-item" bindtap="selectMethod" data-method="wechat">
+        <image class="method-icon" src="/assets/icons/wechat-pay.png" mode="aspectFit"></image>
+        <view class="method-info">
+          <text class="method-name">微信支付</text>
+          <text class="method-desc">使用微信支付</text>
+        </view>
+        <view class="method-check">
+          <text wx:if="{{selectedMethod === 'wechat'}}">✓</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="balance-tip" wx:if="{{selectedMethod === 'balance' && currentBalance < order.totalPrice}}">
+      <text>余额不足，请选择其他支付方式或先充值</text>
+    </view>
+  </view>
+
+  <view class="empty-state" wx:if="{{!order}}">
+    <text>订单不存在</text>
+    <button class="btn-primary" bindtap="goBack">返回</button>
+  </view>
+
+  <view class="payment-actions">
+    <button class="btn-primary payment-btn" bindtap="confirmPayment" disabled="{{!canPay}}">
+      确认支付 ¥{{order ? order.totalPrice : '0.00'}}
+    </button>
+  </view>
+</view>

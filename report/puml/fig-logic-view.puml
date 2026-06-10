@@ -1,0 +1,49 @@
+@startuml fig-logic-view
+skinparam backgroundColor white
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 13
+skinparam dpi 200
+skinparam packageStyle rectangle
+skinparam classFontSize 12
+
+left to right direction
+
+title 零售物品智能识别系统 — 逻辑视图（简化类图）
+
+package "retail-server\n(Spring Boot 3.3 / Java 21)" as Server {
+
+  package "controller\n控制层" as PkgCtrl {
+    class "AuthController\nGoodsController\nCartController\nOrderController\nWarningController\nCameraController" as AdminCtrl <<管理端>>
+    class "AppletAuthController\nAppletHomeController\nAppletGoodsController\nAppletCameraController" as AppletCtrl <<小程序端>>
+  }
+
+  package "service\n业务层" as PkgSvc {
+    class "GoodsService\nCartService\nOrderService\nWarningService\nUserService\nAiIntegrationService" as SvcAll
+  }
+
+  package "mapper\n持久层 (MyBatis-Plus)" as PkgMapper {
+    class "GoodsMapper / OrderMapper\nCameraMapper / UserMapper\nWarningMapper / AdMapper\nWechatUserMapper ..." as MapAll
+  }
+
+  package "entity\n实体层" as PkgEntity {
+    class "Goods / Order / OrderItem\nWarning / Camera / User\nWechatUser / Ad / InventoryLog" as EntAll
+  }
+
+  package "基础设施" as PkgInfra {
+    class "GlobalExceptionHandler\nResult<T> / BusinessException\nCameraScanScheduler\nWebConfig" as InfAll
+  }
+}
+
+package "retail-ai\n(FastAPI / Python)" as AI {
+  class "CameraManager\nrecognition（识别模块）\nsearch（搜索模块）" as AiAll
+}
+
+' === 分层依赖 ===
+PkgCtrl -down-> PkgSvc
+PkgSvc -down-> PkgMapper
+PkgMapper -down-> PkgEntity
+
+' === 跨系统 ===
+SvcAll -right-> AI : "HTTP 调用\n(RestTemplate)"
+
+@enduml

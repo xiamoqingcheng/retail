@@ -1,0 +1,84 @@
+<view class="settings-page">
+  <view class="status-panel">
+    <view class="status-main">
+      <view class="status-dot status-{{connectionStatus}}"></view>
+      <view class="status-copy">
+        <text class="status-title">服务连接</text>
+        <text class="status-text">{{connectionText}}</text>
+      </view>
+    </view>
+    <button class="mini-action" bindtap="testConnection">检测</button>
+  </view>
+
+  <view class="section">
+    <text class="section-title">接口地址</text>
+    <view class="setting-card">
+      <input class="url-input" value="{{apiBaseUrl}}" placeholder="http://localhost:8080/api" bindinput="onApiInput" />
+      <text class="field-hint">默认地址：{{defaultApiBaseUrl}}</text>
+      <view class="button-row">
+        <button class="action-button primary" bindtap="saveApiBaseUrl">保存</button>
+        <button class="action-button" bindtap="copyApiBaseUrl">复制</button>
+        <button class="action-button" bindtap="resetApiBaseUrl">默认</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">账号与缓存</text>
+    <view class="setting-list">
+      <view class="setting-row">
+        <view class="row-copy">
+          <text class="row-title">登录状态</text>
+          <text class="row-desc">{{userLabel}}</text>
+        </view>
+        <button wx:if="{{hasToken}}" class="row-button danger" bindtap="logout">退出</button>
+        <button wx:else class="row-button primary" bindtap="goLogin">登录</button>
+      </view>
+
+      <view class="setting-row">
+        <view class="row-copy">
+          <text class="row-title">购物车缓存</text>
+          <text class="row-desc">{{cacheSummary}}</text>
+        </view>
+        <button class="row-button" bindtap="clearCartCache">清理</button>
+      </view>
+
+      <view class="setting-row">
+        <view class="row-copy">
+          <text class="row-title">浏览缓存</text>
+          <text class="row-desc">{{storageSummary}}</text>
+        </view>
+        <button class="row-button" bindtap="clearBrowseCache">清理</button>
+      </view>
+    </view>
+  </view>
+
+  <view class="section">
+    <text class="section-title">诊断信息</text>
+    <view class="setting-list">
+      <view class="setting-row">
+        <view class="row-copy">
+          <text class="row-title">显示开发信息</text>
+          <text class="row-desc">便于调试网络和版本问题</text>
+        </view>
+        <switch checked="{{showDiagnostics}}" color="#E4393C" bindchange="onDiagnosticsChange" />
+      </view>
+
+      <view class="diagnostics" wx:if="{{showDiagnostics}}">
+        <view class="diagnostic-line">
+          <text>设备</text>
+          <text>{{systemText}}</text>
+        </view>
+        <view class="diagnostic-line">
+          <text>版本</text>
+          <text>{{versionText}} · {{envText}}</text>
+        </view>
+        <view class="diagnostic-line">
+          <text>存储</text>
+          <text>{{storageSummary}}</text>
+        </view>
+        <button class="full-button" bindtap="copyDiagnostics">复制诊断信息</button>
+      </view>
+    </view>
+  </view>
+</view>

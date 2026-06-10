@@ -1,0 +1,166 @@
+% !TeX program = xelatex
+% !BIB program = biber
+% !TeX root = SWJTU_Bachelor_Thesis.tex
+% chktex-file 1
+% chktex-file 44
+
+%%% ======================= 导言 ======================= %%%
+\documentclass[
+  autoindent=true,
+  fontset=none,
+  linespread=1.5,
+  UTF8,
+  openany,
+  twoside,
+  zihao=-4
+]{ctexbook}
+\usepackage[major=计算机科学与技术]{style/swjtu}
+\usepackage{array}
+
+\begin{document}
+%%% ======================= 前置 ======================= %%%
+%%% ----------------------- 封面 ----------------------- %%%
+\begin{titlepage}
+  \thispagestyle{empty}
+  \singlespacing
+
+  \begin{center}
+    \vspace*{0.3cm}
+    \includegraphics[width=0.66\textwidth]{images/logo.png}\par
+    \vspace{1.4cm}
+
+    {\songti\zihao{0}{\makebox[0.58\textwidth][c]{\strut 零售物品智能识别系统}}}\par
+    \vspace{0.9cm}
+    {\songti\zihao{2}{\makebox[0.58\textwidth][c]{\strut 基于yolov8的零售物品智能识别系统}}}\par
+  \end{center}
+
+  \vspace{1.2cm}
+  \begin{center}
+    \renewcommand{\arraystretch}{1.7}
+    \begin{tabular}{@{}l p{9.0cm}@{}}
+      {\heiti\zihao{3}设计人员：}
+                             & \underline{\makebox[9.0cm][c]{\zihao{3}2023112594——陶秋源}}      \\
+                             & \underline{\makebox[9.0cm][c]{\zihao{3}2023112476——马熙翔}}      \\
+                             & \underline{\makebox[9.0cm][c]{\zihao{3}2023112579——王昊宇}}      \\
+                             & \underline{\makebox[9.0cm][c]{\zihao{3}2023112567——程\quad 赞}} \\
+      {\heiti\zihao{3}指导教师：} & \underline{\makebox[9.0cm][c]{\zihao{3}李威、殷成风}}               \\
+    \end{tabular}
+  \end{center}
+
+  \vfill
+
+  \begin{center}
+    \renewcommand{\arraystretch}{1.30}
+    \setlength{\tabcolsep}{5pt}
+    \begin{tabular}{|
+      >{\centering\arraybackslash}m{4.0cm}|
+      >{\raggedright\arraybackslash}m{3.8cm}|
+      >{\centering\arraybackslash}m{4.4cm}|}
+      \hline
+      \cellcolor[RGB]{187,224,227}\songti                      & \cellcolor[RGB]{187,224,227}\songti 文件标识  & \cellcolor[RGB]{187,224,227}\songti 1.0        \\
+      \arrayrulecolor[RGB]{187,224,227}\hline
+      \arrayrulecolor{black}\cline{2-3}
+      \cellcolor[RGB]{187,224,227}\songti 文件状态：                & \cellcolor[RGB]{231,243,244}\songti 当前版本  & \cellcolor[RGB]{231,243,244}\songti V1.0       \\
+      \arrayrulecolor[RGB]{187,224,227}\hline
+      \arrayrulecolor{black}\cline{2-3}
+      \cellcolor[RGB]{187,224,227}\songti [\(\checkmark\)] 草\hspace{1.5em} 稿 & \cellcolor[RGB]{243,249,250}\songti 拟 稿 人 & \cellcolor[RGB]{243,249,250}\songti 王昊宇、程赞     \\
+      \arrayrulecolor[RGB]{187,224,227}\hline
+      \arrayrulecolor{black}\cline{2-3}
+      \cellcolor[RGB]{187,224,227}\songti [\ \ ] 正式发布          & \cellcolor[RGB]{231,243,244}\songti 拟稿日期  & \cellcolor[RGB]{231,243,244}\songti 2026年4月23日 \\
+      \arrayrulecolor[RGB]{187,224,227}\hline
+      \arrayrulecolor{black}\cline{2-3}
+      \cellcolor[RGB]{187,224,227}\songti [\ \ ] 正在修改          & \cellcolor[RGB]{243,249,250}\songti 审 核 人 & \cellcolor[RGB]{243,249,250}\songti 陶秋源、马熙翔    \\
+      \arrayrulecolor[RGB]{187,224,227}\hline
+      \arrayrulecolor{black}\cline{2-3}
+      \cellcolor[RGB]{187,224,227}\songti                      & \cellcolor[RGB]{231,243,244}\songti 审核日期  & \cellcolor[RGB]{231,243,244}\songti 2026年4月26日 \\ \hline
+    \end{tabular}
+  \end{center}
+\end{titlepage}
+
+%%% --------------------- 编写说明 --------------------- %%%
+% \begin{emptyPage}
+%   \singlespacing
+
+%   \begin{center}
+%     \vspace*{1.1cm}
+%     {\heiti\zihao{2}编写说明\par}
+%   \end{center}
+
+%   \vspace{1.2cm}
+%   {\songti\zihao{-4}
+%     \noindent 标题：软件需求规格说明书（xxxx子系统）\par
+%     \vspace{0.9\baselineskip}
+%     \noindent 类别：文档\par
+%     \vspace{0.9\baselineskip}
+%     \noindent 存放位置：项目文档\textbackslash{}02、项目需求项-x-xxxxxx-软件需求规格说明书\par
+%     \noindent \hspace*{3.2em}（xxxx子系统）-V1.0.1.doc\par
+%     \vspace{0.9\baselineskip}
+%     \noindent 编辑软件：Microsoft Word 2023 中文版\par
+%   }
+
+%   \vspace{1.2\baselineskip}
+%   {\songti\zihao{-4}\noindent 版本历史：\par}
+%   \vspace{0.4\baselineskip}
+%   \renewcommand{\arraystretch}{1.25}
+%   \setlength{\tabcolsep}{4pt}
+%   \begin{tabularx}{\linewidth}{|
+%     >{\centering\arraybackslash}m{1.7cm}|
+%     >{\centering\arraybackslash}m{1.8cm}|
+%     >{\centering\arraybackslash}m{2.0cm}|
+%     >{\centering\arraybackslash}X|}
+%     \hline
+%     \heiti 版本 & \heiti 作者 & \heiti 日期 & \heiti 备注 \\ \hline
+%     V1.0.1 &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%   \end{tabularx}
+
+%   \vspace{1.2\baselineskip}
+%   {\songti\zihao{-4}\noindent 完成情况分工：\par}
+%   \vspace{0.4\baselineskip}
+%   \begin{tabularx}{\linewidth}{|
+%     >{\centering\arraybackslash}m{1.7cm}|
+%     >{\centering\arraybackslash}m{1.8cm}|
+%     >{\centering\arraybackslash}m{2.0cm}|
+%     >{\centering\arraybackslash}X|}
+%     \hline
+%     \heiti 学号 & \heiti 姓名 & \heiti 工作量 & \heiti 完成工作内容 \\ \hline
+%      &  & 百分比 &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%      &  &  &  \\ \hline
+%   \end{tabularx}
+% \end{emptyPage}
+
+%%% ======================= 目录 ======================= %%%
+\swjtuTableOfContents
+
+%%% ======================= 正文 ======================= %%%
+% \include{chapters/introduction}
+\include{chapters/chapter1}
+\include{chapters/chapter2}
+\include{chapters/chapter3}
+\include{chapters/chapter4}
+\include{chapters/chapter5}
+\include{chapters/chapter6}
+
+%%% ===================== 结致参附 ===================== %%%
+%%% ----------------------- 结论 ----------------------- %%%
+% \include{chapters/conclusion}
+
+%%% ----------------------- 致谢 ----------------------- %%%
+% \include{chapters/acknowledgments}
+
+%%% --------------------- 参考文献 --------------------- %%%
+\swjtuBibliography{参考文献}
+
+%%% ----------------------- 附录 ----------------------- %%%
+% \include{appendix/appendix1}
+% \include{appendix/appendix2}
+
+\end{document}

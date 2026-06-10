@@ -1,0 +1,46 @@
+@startuml fig-deploy-view
+!theme plain
+skinparam backgroundColor white
+skinparam defaultFontName Microsoft YaHei
+skinparam defaultFontSize 12
+skinparam dpi 200
+
+title 零售物品智能识别系统 — 部署视图（部署图）
+
+node "前端开发机\n(Node.js 24)" as FrontNode {
+  artifact "retail-admin-pro" as AdminArt
+  note bottom: pnpm + Vite\n端口 5173
+}
+
+node "微信云" as WxCloud {
+  artifact "retail-customer\n(小程序包)" as MiniArt
+}
+
+node "应用服务器\n(Java 21 + Python 3.10+)" as AppServer {
+  artifact "retail-server.jar" as ServerArt
+  note right of ServerArt: Maven 构建\n端口 8080
+
+  artifact "retail-ai (main.py)" as AiArt
+  note right of AiArt: pip + uvicorn\n端口 8000
+}
+
+node "数据库服务器" as DbServer {
+  database "MySQL 8.x\n(retail_db)" as MySQL
+}
+
+node "缓存服务器" as CacheServer {
+  database "Redis 8.x" as Redis
+}
+
+node "物理设备" as HwNode {
+  component "USB 摄像头" as Cam
+}
+
+AdminArt --> ServerArt : HTTP :8080\n(Vite proxy)
+MiniArt --> ServerArt : HTTPS :8080
+ServerArt --> MySQL : JDBC :3306
+ServerArt --> Redis : Lettuce :6379
+ServerArt --> AiArt : HTTP :8000
+AiArt --> Cam : DirectShow
+
+@enduml

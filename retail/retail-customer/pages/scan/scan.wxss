@@ -1,0 +1,623 @@
+/* ============================================================
+   智能识别页 · 三阶段（选择 / 即拍 / 相册）
+   ============================================================ */
+page {
+  background-color: #000;
+}
+.scan-page {
+  width: 100vw;
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+/* ============ 1. 模式选择 ============ */
+.mode-choose {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  padding: 80rpx 32rpx 64rpx;
+  box-sizing: border-box;
+}
+.choose-header {
+  text-align: center;
+  margin-bottom: 56rpx;
+}
+.choose-title {
+  display: block;
+  font-size: 44rpx;
+  font-weight: 700;
+  color: var(--text-title);
+  margin-bottom: 16rpx;
+}
+.choose-subtitle {
+  display: block;
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.choose-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 28rpx;
+}
+.choose-card {
+  background-color: #fff;
+  border-radius: var(--radius-md);
+  border: 1rpx solid var(--border);
+  padding: 44rpx 32rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: all 0.2s;
+}
+.card-hover {
+  background-color: #FAFAFA;
+  transform: scale(0.99);
+}
+.choose-card-icon-wrap {
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 32rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 22rpx;
+}
+.camera-icon-bg {
+  background-color: #FFF4E6;
+}
+.album-icon-bg {
+  background-color: #FFF1F0;
+}
+.choose-card-icon {
+  width: 84rpx;
+  height: 84rpx;
+}
+.choose-card-name {
+  display: block;
+  font-size: 34rpx;
+  color: var(--text-title);
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+.choose-card-desc {
+  display: block;
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+
+/* ============ 2. 即拍识别 ============ */
+.camera-mode {
+  position: fixed;
+  inset: 0;
+  background-color: #000;
+  overflow: hidden;
+}
+.camera-view {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* 已捕获画面 */
+.captured-stage {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: #000;
+}
+.captured-image {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background-color: #000;
+}
+.captured-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+/* 画框 */
+.det-box {
+  position: absolute;
+  pointer-events: none;
+}
+.det-box-border {
+  width: 100%;
+  height: 100%;
+  border: 4rpx solid #FF8A00;
+  border-radius: 12rpx;
+  box-shadow: 0 0 0 2rpx rgba(255, 138, 0, 0.25);
+  background-color: rgba(255, 138, 0, 0.08);
+}
+.det-box-tag {
+  position: absolute;
+  top: -22rpx;
+  left: -8rpx;
+  min-width: 36rpx;
+  height: 36rpx;
+  padding: 0 8rpx;
+  border-radius: 18rpx;
+  background-color: #FF8A00;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2rpx 6rpx rgba(0,0,0,0.2);
+}
+
+/* 顶部状态栏（位于小程序默认导航栏下方）*/
+.cam-topbar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 24rpx 28rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(180deg, rgba(0,0,0,0.45) 0%, rgba(0,0,0,0) 100%);
+  z-index: 60;
+}
+.cam-top-btn {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background-color: rgba(0,0,0,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.cam-top-btn.ghost {
+  visibility: hidden;
+}
+.cam-top-icon {
+  color: #fff;
+  font-size: 44rpx;
+  line-height: 1;
+  font-weight: 300;
+}
+.cam-top-title {
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+}
+
+/* 底部拍照栏 */
+.cam-capture-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 32rpx 0 calc(64rpx + env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.55) 100%);
+  z-index: 30;
+}
+.capture-tip {
+  color: rgba(255,255,255,0.85);
+  font-size: 24rpx;
+  margin-bottom: 28rpx;
+}
+.capture-btn {
+  width: 144rpx;
+  height: 144rpx;
+  border-radius: 50%;
+  background-color: rgba(255,255,255,0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform 0.15s;
+}
+.capture-btn-active {
+  transform: scale(0.92);
+}
+.capture-btn-ring {
+  position: absolute;
+  inset: 12rpx;
+  border: 4rpx solid #fff;
+  border-radius: 50%;
+}
+.capture-btn-core {
+  width: 104rpx;
+  height: 104rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFB74D 0%, #FF8A00 100%);
+  box-shadow: 0 4rpx 18rpx rgba(255, 138, 0, 0.55);
+}
+
+/* 识别中：spinner + 文字（用于面板内 loading 占位） */
+.capturing-spinner {
+  width: 64rpx;
+  height: 64rpx;
+  border: 4rpx solid #f0f0f0;
+  border-top-color: #FF8A00;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-bottom: 24rpx;
+}
+.capturing-text {
+  font-size: 30rpx;
+  color: var(--text-title);
+  font-weight: 600;
+  margin-bottom: 8rpx;
+}
+.capturing-sub {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ============ 上拉面板 ============ */
+.result-panel {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ffffff;
+  border-radius: 28rpx 28rpx 0 0;
+  box-shadow: 0 -6rpx 24rpx rgba(0,0,0,0.18);
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  will-change: transform;
+}
+.result-panel.with-transition {
+  transition: transform 0.28s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+.panel-handle {
+  padding: 18rpx 32rpx 16rpx;
+  background-color: #fff;
+  border-bottom: 1rpx solid var(--border);
+  flex-shrink: 0;
+}
+.handle-bar {
+  width: 72rpx;
+  height: 8rpx;
+  border-radius: 4rpx;
+  background-color: #DDDDDD;
+  margin: 0 auto 16rpx;
+}
+.handle-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+.handle-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: var(--text-title);
+}
+.handle-hint {
+  font-size: 22rpx;
+  color: var(--text-secondary);
+}
+
+/* 滚动结果列表 */
+.panel-scroll {
+  flex: 1;
+  background-color: #FAFAFA;
+  padding: 16rpx 24rpx 0;
+  box-sizing: border-box;
+}
+.result-card {
+  background-color: #fff;
+  border-radius: 16rpx;
+  border: 1rpx solid var(--border);
+  padding: 20rpx;
+  margin-bottom: 16rpx;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.result-index {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background-color: #FF8A00;
+  color: #fff;
+  font-size: 22rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 16rpx;
+  flex-shrink: 0;
+}
+.result-image {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 12rpx;
+  background-color: #F5F5F5;
+  flex-shrink: 0;
+  margin-right: 20rpx;
+}
+.result-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+.result-name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-title);
+  margin-bottom: 8rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.result-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 10rpx;
+  flex-wrap: wrap;
+}
+.conf-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 2rpx 12rpx;
+  background-color: #FFF4E6;
+  color: #FF8A00;
+  font-size: 20rpx;
+  border-radius: 6rpx;
+  font-weight: 600;
+}
+.shelf-tag {
+  font-size: 20rpx;
+  color: var(--text-secondary);
+}
+.result-price {
+  font-size: 30rpx;
+  color: var(--brand);
+  font-weight: 700;
+}
+
+/* +/- 按钮区 */
+.result-actions {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-left: 12rpx;
+  flex-shrink: 0;
+}
+.qty-btn {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  line-height: 1;
+  transition: transform 0.15s;
+}
+.qty-btn:active {
+  transform: scale(0.9);
+}
+.qty-inc {
+  background-color: #FF8A00;
+  color: #fff;
+  box-shadow: 0 2rpx 8rpx rgba(255,138,0,0.35);
+}
+.qty-dec {
+  background-color: #fff;
+  color: #FF8A00;
+  border: 2rpx solid #FF8A00;
+}
+.qty-hidden {
+  visibility: hidden;
+  width: 0;
+  margin: 0;
+  border: none;
+}
+.qty-num {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: var(--text-title);
+  min-width: 36rpx;
+  text-align: center;
+}
+
+.panel-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 32rpx;
+  text-align: center;
+}
+.panel-loading .capturing-text {
+  margin-top: 8rpx;
+}
+.panel-loading .capturing-sub {
+  margin-top: 6rpx;
+}
+
+.result-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 80rpx 32rpx;
+  text-align: center;
+}
+.result-empty-icon {
+  width: 140rpx;
+  height: 140rpx;
+  opacity: 0.4;
+  margin-bottom: 20rpx;
+}
+.result-empty-text {
+  font-size: 30rpx;
+  color: var(--text-body);
+  font-weight: 600;
+  margin-bottom: 10rpx;
+}
+.result-empty-hint {
+  font-size: 24rpx;
+  color: var(--text-secondary);
+}
+.scroll-bottom-spacer {
+  height: 20rpx;
+}
+
+/* 面板底部固定结算栏 */
+.panel-footer {
+  background-color: #fff;
+  border-top: 1rpx solid var(--border);
+  padding: 18rpx 28rpx calc(18rpx + env(safe-area-inset-bottom));
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  gap: 20rpx;
+}
+.footer-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+  flex: 1;
+  min-width: 0;
+}
+.summary-label {
+  font-size: 26rpx;
+  color: var(--text-secondary);
+}
+.summary-count {
+  font-size: 32rpx;
+  color: var(--text-title);
+  font-weight: 700;
+}
+.summary-sep {
+  color: var(--border-dark);
+  margin: 0 4rpx;
+}
+.summary-price {
+  font-size: 36rpx;
+  color: var(--brand);
+  font-weight: 700;
+}
+.checkout-btn {
+  min-width: 240rpx;
+  padding: 22rpx 40rpx;
+  border-radius: 50rpx;
+  background: linear-gradient(135deg, #FFB74D 0%, #FF8A00 100%);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 700;
+  text-align: center;
+  box-shadow: 0 4rpx 14rpx rgba(255,138,0,0.45);
+  transition: all 0.15s;
+}
+.checkout-btn:active {
+  transform: scale(0.97);
+  opacity: 0.92;
+}
+.checkout-btn.disabled {
+  background: #D8D8D8;
+  color: #fff;
+  box-shadow: none;
+}
+
+/* ============ 3. 图片识别（保留模式） ============ */
+.album-mode {
+  min-height: 100vh;
+  background-color: var(--bg-page);
+  padding-bottom: 64rpx;
+}
+.album-header {
+  background-color: #fff;
+  padding: 32rpx 28rpx;
+  display: flex;
+  align-items: center;
+  border-bottom: 1rpx solid var(--border);
+}
+.album-back {
+  font-size: 30rpx;
+  color: var(--text-body);
+  padding-right: 24rpx;
+}
+.album-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: var(--text-title);
+  flex: 1;
+  text-align: center;
+  padding-right: 80rpx;
+}
+.album-preview {
+  padding: 24rpx;
+}
+.album-image-wrap {
+  position: relative;
+  background-color: #fff;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1rpx solid var(--border);
+}
+.album-image {
+  width: 100%;
+  display: block;
+}
+.album-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+}
+.album-actions {
+  display: flex;
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+.album-btn {
+  flex: 1;
+  padding: 22rpx 0;
+  text-align: center;
+  border-radius: var(--radius-sm);
+  font-size: 28rpx;
+  font-weight: 600;
+}
+.album-btn.outline {
+  background-color: #fff;
+  color: var(--brand);
+  border: 1rpx solid var(--brand);
+}
+.album-section-title {
+  margin: 32rpx 4rpx 16rpx;
+  font-size: 28rpx;
+  font-weight: 600;
+  color: var(--text-title);
+}
+.album-results {
+  padding-bottom: 32rpx;
+}
+.album-loading {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0,0,0,0.5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.album-loading .capturing-spinner {
+  margin-bottom: 20rpx;
+}
+.album-loading .capturing-text {
+  color: #fff;
+}

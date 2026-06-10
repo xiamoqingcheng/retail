@@ -1,0 +1,53 @@
+<view class="container">
+  <view class="login-header">
+    <image class="login-logo" src="/assets/icon.jpg" mode="aspectFit"></image>
+    <text class="login-title">智能零售系统</text>
+    <text class="login-subtitle">便捷购物 · 智能识别</text>
+  </view>
+
+  <view class="login-main">
+    <view class="welcome-section">
+      <text class="welcome-title">欢迎回来</text>
+      <text class="welcome-desc">一键登录，开启智能购物体验</text>
+    </view>
+
+    <view class="login-button-section">
+      <button
+        class="wechat-login-btn"
+        bindtap="onLoginClick"
+        loading="{{loading}}"
+      >
+        <image class="wechat-icon" src="/assets/wechat_login.png" mode="aspectFit"></image>
+        <text class="wechat-text">微信一键登录</text>
+      </button>
+
+      <view class="login-tip">
+        <text class="tip-text">登录即表示同意</text>
+        <text class="text-primary" bindtap="showUserAgreement">《用户协议》</text>
+        <text class="tip-text">和</text>
+        <text class="text-primary" bindtap="showPrivacyPolicy">《隐私政策》</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="features-section">
+    <view class="features-title">我们的服务</view>
+    <view class="features-grid">
+      <view class="feature-item">
+        <image class="feature-icon" src="/assets/autoscan.png" mode="aspectFit"></image>
+        <text class="feature-name">智能识别</text>
+        <text class="feature-desc">拍照识别商品</text>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/assets/car.png" mode="aspectFit"></image>
+        <text class="feature-name">便捷购物</text>
+        <text class="feature-desc">扫码即购</text>
+      </view>
+      <view class="feature-item">
+        <image class="feature-icon" src="/assets/search.png" mode="aspectFit"></image>
+        <text class="feature-name">快速查询</text>
+        <text class="feature-desc">商品搜索</text>
+      </view>
+    </view>
+  </view>
+</view>
