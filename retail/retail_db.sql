@@ -55,13 +55,15 @@ CREATE TABLE `sys_goods` (
   `shelf_id`     VARCHAR(64)      NOT NULL COMMENT '货架编号',
   `image_url`    VARCHAR(255)     DEFAULT NULL COMMENT '商品图片URL',
   `status`       TINYINT          NOT NULL DEFAULT 1 COMMENT '状态(1上架/0下架)',
+  `deleted`      TINYINT          NOT NULL DEFAULT 0 COMMENT '逻辑删除(0未删除/1已删除)',
   `create_time`  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `update_time`  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`),
   KEY `idx_goods_shelf_id` (`shelf_id`),
   KEY `idx_goods_category_id` (`category_id`),
   KEY `idx_goods_barcode` (`barcode`),
-  KEY `idx_goods_status` (`status`)
+  KEY `idx_goods_status` (`status`),
+  KEY `idx_goods_deleted` (`deleted`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='商品基础表';
 
 -- ---------------------------
@@ -164,7 +166,28 @@ CREATE TABLE `sys_ad` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='首页轮播广告表';
 
 -- ---------------------------
--- 10. 用户反馈表
+-- 10. 用户行为事件表（推荐/搜索）
+-- ---------------------------
+DROP TABLE IF EXISTS `sys_user_behavior_event`;
+CREATE TABLE `sys_user_behavior_event` (
+  `id`          BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT COMMENT '事件ID',
+  `user_id`     BIGINT UNSIGNED  NOT NULL COMMENT '小程序用户ID',
+  `event_type`  VARCHAR(32)      NOT NULL COMMENT '事件类型(SEARCH/VIEW/PURCHASE/CANCEL)',
+  `goods_id`    BIGINT UNSIGNED  DEFAULT NULL COMMENT '商品ID',
+  `keyword`     VARCHAR(128)     DEFAULT NULL COMMENT '搜索关键词',
+  `quantity`    INT              NOT NULL DEFAULT 1 COMMENT '事件数量/权重',
+  `order_id`    BIGINT UNSIGNED  DEFAULT NULL COMMENT '订单ID',
+  `create_time` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_behavior_user_time` (`user_id`, `create_time`),
+  KEY `idx_behavior_type_time` (`event_type`, `create_time`),
+  KEY `idx_behavior_goods_time` (`goods_id`, `create_time`),
+  KEY `idx_behavior_keyword_time` (`keyword`, `create_time`),
+  KEY `idx_behavior_order_id` (`order_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户行为事件表';
+
+-- ---------------------------
+-- 11. 用户反馈表
 -- ---------------------------
 DROP TABLE IF EXISTS `sys_feedback`;
 CREATE TABLE `sys_feedback` (
@@ -189,7 +212,7 @@ CREATE TABLE `sys_feedback` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户反馈表';
 
 -- ---------------------------
--- 11. 摄像头管理表
+-- 12. 摄像头管理表
 -- ---------------------------
 DROP TABLE IF EXISTS `sys_camera`;
 CREATE TABLE `sys_camera` (

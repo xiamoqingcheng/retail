@@ -55,6 +55,10 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
             token = request.getParameter("token");
         }
 
+        if (!StringUtils.hasText(token) && isOptionalAuthPath(request)) {
+            return true;
+        }
+
         if (!StringUtils.hasText(token)) {
             throw new BusinessException(401, "未登录或Token缺失");
         }
@@ -84,6 +88,9 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
                 log.debug("Redis 不可用，跳过 Token 撤销检查", e);
             }
             if (storedToken != null && !storedToken.equals(token)) {
+                if (isOptionalAuthPath(request)) {
+                    return true;
+                }
                 throw new BusinessException(401, "Token已失效，请重新登录");
             }
 
@@ -91,8 +98,15 @@ public class JwtAuthInterceptor implements HandlerInterceptor {
             UserContext.setCurrentRole(role);
             return true;
         } catch (JwtException | IllegalArgumentException ex) {
+            if (isOptionalAuthPath(request)) {
+                return true;
+            }
             throw new BusinessException(401, "Token无效或已过期");
         }
+    }
+
+    private boolean isOptionalAuthPath(HttpServletRequest request) {
+        return "/api/applet/home/recommend".equals(request.getRequestURI());
     }
 
     @Override

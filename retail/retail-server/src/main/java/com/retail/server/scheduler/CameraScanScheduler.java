@@ -273,6 +273,7 @@ public class CameraScanScheduler {
                     .set(Camera::getStatus, 0)
                     .set(Camera::getLastScanTime, LocalDateTime.now()));
             if (updated > 0) {
+                cameraCaptureService.releaseStream(camera.getCameraNo());
                 log.warn("摄像头 {} 截取帧失败，已自动标记为停用，后续巡检将跳过", camera.getCameraNo());
                 return;
             }

@@ -229,6 +229,23 @@
           </view>
         </view>
       </view>
+
+      <view class="album-footer" wx:if="{{albumDetectedItems.length > 0}}">
+        <view class="album-cart-entry" bindtap="goCart">
+          <image class="album-cart-icon" src="/assets/icons/cart.png" mode="aspectFit"></image>
+          <text class="album-cart-text">购物车</text>
+          <view class="album-cart-badge" wx:if="{{cartTotalCount > 0}}">
+            {{cartTotalCount > 99 ? '99+' : cartTotalCount}}
+          </view>
+        </view>
+        <view class="album-footer-summary">
+          <text class="album-footer-count">已选 {{albumSelectedCount}} 件</text>
+          <text class="album-footer-total">¥{{albumSelectedTotalText}}</text>
+        </view>
+        <view class="album-checkout-btn {{albumSelectedCount === 0 ? 'disabled' : ''}}" bindtap="goAlbumSettlement">
+          一键结算
+        </view>
+      </view>
     </view>
 
     <view class="album-loading" wx:if="{{isLoading}}">

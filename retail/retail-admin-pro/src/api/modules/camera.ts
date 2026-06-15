@@ -1,10 +1,27 @@
 import http from "@/api";
 
+const cameraPath = (cameraNo: string) => encodeURIComponent(cameraNo);
+
 export interface CameraBindingPayload {
   id?: number | string | null;
   camera_no?: string;
   shelf_id?: string;
   shelfId?: string;
+}
+
+export interface CameraAgentCamera {
+  id: string;
+  index: number | string;
+  name?: string;
+}
+
+export interface CameraAgentInfo {
+  service?: string;
+  version?: string;
+  host: string;
+  port: number;
+  available_indexes?: Array<number | string>;
+  cameras?: CameraAgentCamera[];
 }
 
 /**
@@ -15,9 +32,21 @@ export const getAvailableHardwareCameras = () => {
   return http.get<Array<number | string>>("/api/admin/camera/available_hardware");
 };
 
+// 自动发现局域网内运行中的摄像头扩展端
+export const discoverCameraAgents = (timeoutMillis = 1500) => {
+  return http.get<CameraAgentInfo[]>(`/api/admin/camera/agents/discover?timeoutMillis=${timeoutMillis}`);
+};
+
+// 查询指定扩展端的可用摄像头
+export const getCameraAgentAvailable = (host: string, port?: number | string) => {
+  const params = new URLSearchParams({ host });
+  if (port) params.set("port", String(port));
+  return http.get<CameraAgentInfo>(`/api/admin/camera/agent/available?${params.toString()}`);
+};
+
 // 获取摄像头预览单帧（base64）
 export const getCameraPreviewFrame = (cameraNo: string) => {
-  return http.get<string>(`/api/admin/camera/preview/${cameraNo}`);
+  return http.get<string>(`/api/admin/camera/preview/${cameraPath(cameraNo)}`);
 };
 
 // 新增摄像头绑定关系
@@ -61,5 +90,5 @@ export const triggerSchedulerOnce = () => {
 
 // 主动释放摄像头资源
 export const stopCameraStream = (cameraNo: string) => {
-  return http.post(`/api/admin/camera/stream/${cameraNo}/stop`);
+  return http.post(`/api/admin/camera/stream/stop?cameraNo=${cameraPath(cameraNo)}`);
 };

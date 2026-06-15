@@ -27,6 +27,9 @@ management:
       show-details: when-authorized
 
 camera:
+  agent:
+    default-port: 8765
+    discovery-port: 8766
   scheduler:
     interval-minutes: 5
     batch-size: 10

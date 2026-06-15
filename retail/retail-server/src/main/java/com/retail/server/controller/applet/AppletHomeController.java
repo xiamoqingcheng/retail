@@ -6,19 +6,14 @@ import com.retail.server.context.UserContext;
 import com.retail.server.entity.Ad;
 import com.retail.server.exception.BusinessException;
 import com.retail.server.mapper.AdMapper;
-import com.retail.server.mapper.GoodsMapper;
+import com.retail.server.recommendation.service.PersonalizedRecommendService;
 import com.retail.server.vo.AppletAdVO;
-import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.util.CollectionUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.Duration;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * 小程序首页控制器。
@@ -28,21 +23,16 @@ import java.util.concurrent.ThreadLocalRandom;
 public class AppletHomeController {
 
     private static final int STATUS_ENABLED = 1;
-    private static final String RECOMMEND_KEY_PREFIX = "recommend:user:";
-    private static final int RECOMMEND_POOL_SIZE = 50;
-    private static final Duration RECOMMEND_TTL = Duration.ofMinutes(10);
+    private static final int MAX_RECOMMEND_COUNT = 80;
 
     private final AdMapper adMapper;
-    private final GoodsMapper goodsMapper;
-    private final StringRedisTemplate stringRedisTemplate;
+    private final PersonalizedRecommendService personalizedRecommendService;
 
     public AppletHomeController(
             AdMapper adMapper,
-            GoodsMapper goodsMapper,
-            StringRedisTemplate stringRedisTemplate) {
+            PersonalizedRecommendService personalizedRecommendService) {
         this.adMapper = adMapper;
-        this.goodsMapper = goodsMapper;
-        this.stringRedisTemplate = stringRedisTemplate;
+        this.personalizedRecommendService = personalizedRecommendService;
     }
 
     /**
@@ -77,70 +67,22 @@ public class AppletHomeController {
         }
 
         Long userId = UserContext.getCurrentUserId();
-        if (userId == null || userId < 1) {
+        if (userId != null && userId < 1) {
             throw new BusinessException(401, "未登录或Token无效");
         }
 
-        String redisKey = RECOMMEND_KEY_PREFIX + userId;
-        if (offset == 0) {
-            refreshRecommendFlow(redisKey);
-        }
-
-        Long total = stringRedisTemplate.opsForList().size(redisKey);
-        if (total == null || total == 0 || offset >= total) {
+        int count = Math.min(MAX_RECOMMEND_COUNT, offset + k);
+        List<Long> flow = personalizedRecommendService.recommendGoodsIds(userId, count);
+        if (flow.isEmpty() || offset >= flow.size()) {
             return new Result<>(204, "没有更多数据", List.of());
         }
 
-        long end = (long) offset + k - 1;
-        List<String> idStrings = stringRedisTemplate.opsForList().range(redisKey, offset, end);
-        if (CollectionUtils.isEmpty(idStrings)) {
-            return new Result<>(204, "没有更多数据", List.of());
-        }
-
-        List<Long> ids = idStrings.stream()
-                .map(this::safeParseLong)
-                .filter(Objects::nonNull)
-                .toList();
+        int end = Math.min(flow.size(), offset + k);
+        List<Long> ids = flow.subList(offset, end);
         if (ids.isEmpty()) {
             return new Result<>(204, "没有更多数据", List.of());
         }
 
         return Result.success(ids);
-    }
-
-    private void refreshRecommendFlow(String redisKey) {
-        long total = goodsMapper.countActiveGoods();
-        if (total == 0) {
-            stringRedisTemplate.delete(redisKey);
-            return;
-        }
-
-        int limit = Math.min(RECOMMEND_POOL_SIZE, (int) total);
-        int maxOffset = (int) total - limit;
-        int offset = maxOffset > 0 ? ThreadLocalRandom.current().nextInt(maxOffset + 1) : 0;
-        List<Long> goodsIds = goodsMapper.selectGoodsIdsByOffset(limit, offset);
-
-        stringRedisTemplate.delete(redisKey);
-        if (CollectionUtils.isEmpty(goodsIds)) {
-            return;
-        }
-
-        List<String> cacheIds = goodsIds.stream()
-                .map(String::valueOf)
-                .toList();
-
-        stringRedisTemplate.opsForList().rightPushAll(redisKey, cacheIds);
-        stringRedisTemplate.expire(redisKey, RECOMMEND_TTL);
-    }
-
-    private Long safeParseLong(String value) {
-        if (value == null) {
-            return null;
-        }
-        try {
-            return Long.parseLong(value);
-        } catch (NumberFormatException ex) {
-            return null;
-        }
     }
 }

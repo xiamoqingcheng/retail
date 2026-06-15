@@ -2,6 +2,7 @@ package com.retail.server.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.retail.server.camera.RemoteCameraAddress;
 import com.retail.server.common.Result;
 import com.retail.server.dto.CameraBindRequest;
 import com.retail.server.dto.CameraSchedulerConfigRequest;
@@ -11,6 +12,7 @@ import com.retail.server.entity.Camera;
 import com.retail.server.exception.BusinessException;
 import com.retail.server.mapper.CameraMapper;
 import com.retail.server.scheduler.CameraScanScheduler;
+import com.retail.server.service.CameraAgentService;
 import com.retail.server.service.CameraCaptureService;
 import com.retail.server.service.CameraService;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +31,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
@@ -38,6 +41,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * 摄像头管理控制器。
@@ -51,6 +55,7 @@ public class CameraController {
     private final CameraService cameraService;
     private final RestTemplate restTemplate;
     private final CameraCaptureService cameraCaptureService;
+    private final CameraAgentService cameraAgentService;
 
     @Value("${ai.service-url:http://localhost:8000}")
     private String aiServiceUrl;
@@ -59,11 +64,13 @@ public class CameraController {
             CameraScanScheduler cameraScanScheduler,
             CameraService cameraService,
             RestTemplate restTemplate,
-            CameraCaptureService cameraCaptureService) {
+            CameraCaptureService cameraCaptureService,
+            CameraAgentService cameraAgentService) {
         this.cameraScanScheduler = cameraScanScheduler;
         this.cameraService = cameraService;
         this.restTemplate = restTemplate;
         this.cameraCaptureService = cameraCaptureService;
+        this.cameraAgentService = cameraAgentService;
     }
 
     /**
@@ -95,7 +102,27 @@ public class CameraController {
     }
 
     /**
-     * 绑定并新增摄像头。
+     * Discover camera agents in the same LAN.
+     */
+    @GetMapping("/agents/discover")
+    public Result<List<Map<String, Object>>> discoverCameraAgents(
+            @RequestParam(required = false) Integer timeoutMillis) {
+        return Result.success(cameraAgentService.discoverAgents(timeoutMillis));
+    }
+
+    @GetMapping("/agent/available")
+    public Result<Map<String, Object>> listAgentCameras(
+            @RequestParam String host,
+            @RequestParam(required = false) Integer port) {
+        try {
+            return Result.success(cameraAgentService.listAvailable(host, port));
+        } catch (RestClientException ex) {
+            throw new BusinessException(502, "Remote camera agent unavailable: " + ex.getMessage());
+        }
+    }
+
+    /**
+     * Bind and create a camera.
      */
     @PostMapping
     @Transactional(rollbackFor = Exception.class)
@@ -174,6 +201,9 @@ public class CameraController {
         if (affected != 1) {
             throw new BusinessException(500, "更新摄像头状态失败");
         }
+        if (status == 0) {
+            releaseCameraStream(camera.getCameraNo());
+        }
         return Result.success("状态更新成功", null);
     }
 
@@ -196,6 +226,7 @@ public class CameraController {
         if (affected != 1) {
             throw new BusinessException(500, "删除摄像头失败");
         }
+        releaseCameraStream(camera.getCameraNo());
         return Result.success("删除成功", null);
     }
 
@@ -206,6 +237,16 @@ public class CameraController {
     public Result<String> previewCamera(@PathVariable String cameraNo) {
         if (!StringUtils.hasText(cameraNo)) {
             throw new BusinessException(400, "cameraNo 不能为空");
+        }
+        assertBoundCameraEnabled(cameraNo);
+
+        Optional<RemoteCameraAddress> remoteAddress = cameraAgentService.parse(cameraNo);
+        if (remoteAddress.isPresent()) {
+            String imageBase64 = cameraAgentService.captureFrame(remoteAddress.get());
+            if (!StringUtils.hasText(imageBase64)) {
+                throw new BusinessException(502, "Remote camera preview failed");
+            }
+            return Result.success(imageBase64);
         }
 
         Integer cameraIndex = parseCameraIndex(cameraNo);
@@ -236,6 +277,17 @@ public class CameraController {
             response.setStatus(400);
             return;
         }
+        if (isDisabledBoundCamera(cameraNo)) {
+            response.setStatus(409);
+            return;
+        }
+
+        Optional<RemoteCameraAddress> remoteAddress = cameraAgentService.parse(cameraNo);
+        if (remoteAddress.isPresent()) {
+            proxyMjpegStream(remoteAddress.get().streamUrl(), response);
+            return;
+        }
+
         Integer cameraIndex = parseCameraIndex(cameraNo);
         if (cameraIndex == null || cameraIndex < 0) {
             response.setStatus(400);
@@ -271,6 +323,11 @@ public class CameraController {
                 response.setStatus(502);
             }
         }
+    }
+
+    @GetMapping("/stream")
+    public void streamCameraByQuery(@RequestParam String cameraNo, HttpServletResponse response) {
+        streamCamera(cameraNo, response);
     }
 
     /**
@@ -322,17 +379,48 @@ public class CameraController {
      */
     @PostMapping("/stream/{cameraNo}/stop")
     public Result<Void> stopStream(@PathVariable String cameraNo) {
-        Integer cameraIndex = parseCameraIndex(cameraNo);
-        if (cameraIndex == null || cameraIndex < 0) {
-            throw new BusinessException(400, "cameraNo 非法");
+        if (!StringUtils.hasText(cameraNo)) {
+            throw new BusinessException(400, "cameraNo invalid");
         }
-        String url = aiServiceUrl + "/api/ai/cameras/stream/" + cameraIndex + "/stop";
+        if (!releaseCameraStream(cameraNo)) {
+            throw new BusinessException(502, "release camera stream failed");
+        }
+        return Result.success("Released", null);
+    }
+
+    @PostMapping("/stream/stop")
+    public Result<Void> stopStreamByQuery(@RequestParam String cameraNo) {
+        return stopStream(cameraNo);
+    }
+
+    private void proxyMjpegStream(String url, HttpServletResponse response) {
         try {
-            restTemplate.postForEntity(url, null, String.class);
-            return Result.success("已释放", null);
-        } catch (RestClientException ex) {
-            log.warn("释放摄像头资源异常: {}", ex.getMessage());
-            throw new BusinessException(502, "释放摄像头资源失败: " + ex.getMessage());
+            restTemplate.execute(url, HttpMethod.GET, null, streamResponse -> {
+                if (streamResponse.getStatusCode().value() != 200) {
+                    response.setStatus(streamResponse.getStatusCode().value());
+                    return null;
+                }
+
+                response.setContentType("multipart/x-mixed-replace; boundary=frame");
+                response.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+                response.setHeader("Connection", "keep-alive");
+
+                try (InputStream in = streamResponse.getBody();
+                     OutputStream out = response.getOutputStream()) {
+                    byte[] buf = new byte[8192];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buf)) != -1) {
+                        out.write(buf, 0, bytesRead);
+                        out.flush();
+                    }
+                }
+                return null;
+            });
+        } catch (Exception ex) {
+            log.warn("Camera stream proxy failed: {}", ex.getMessage());
+            if (!response.isCommitted()) {
+                response.setStatus(502);
+            }
         }
     }
 
@@ -350,13 +438,19 @@ public class CameraController {
      */
     @GetMapping("/snapshot/{cameraNo}")
     public Result<Map<String, Object>> annotatedSnapshot(@PathVariable String cameraNo) {
-        Integer cameraIndex = parseCameraIndex(cameraNo);
-        if (cameraIndex == null || cameraIndex < 0) {
-            throw new BusinessException(400, "cameraNo 非法");
+        if (!StringUtils.hasText(cameraNo)) {
+            throw new BusinessException(400, "cameraNo invalid");
+        }
+        assertBoundCameraEnabled(cameraNo);
+        if (cameraAgentService.parse(cameraNo).isEmpty()) {
+            Integer cameraIndex = parseCameraIndex(cameraNo);
+            if (cameraIndex == null || cameraIndex < 0) {
+                throw new BusinessException(400, "cameraNo 非法");
+            }
         }
 
         // 1. 从流中截取一帧
-        String frameBase64 = captureCameraFrame(cameraIndex);
+        String frameBase64 = captureCameraFrame(cameraNo);
         if (frameBase64 == null) {
             throw new BusinessException(502, "摄像头截帧失败");
         }
@@ -377,8 +471,33 @@ public class CameraController {
         }
     }
 
-    private String captureCameraFrame(Integer cameraIndex) {
-        return cameraCaptureService.captureFrameByIndex(cameraIndex);
+    private String captureCameraFrame(String cameraNo) {
+        return cameraCaptureService.captureFrame(cameraNo);
+    }
+
+    private void assertBoundCameraEnabled(String cameraNo) {
+        if (isDisabledBoundCamera(cameraNo)) {
+            throw new BusinessException(409, "camera is offline");
+        }
+    }
+
+    private boolean isDisabledBoundCamera(String cameraNo) {
+        if (!StringUtils.hasText(cameraNo)) {
+            return false;
+        }
+        Camera camera = cameraService.getByCameraNo(cameraNo.trim());
+        return camera != null && !Integer.valueOf(1).equals(camera.getStatus());
+    }
+
+    private boolean releaseCameraStream(String cameraNo) {
+        if (!StringUtils.hasText(cameraNo)) {
+            return false;
+        }
+        boolean released = cameraCaptureService.releaseStream(cameraNo);
+        if (!released) {
+            log.warn("Release camera stream failed or skipped: cameraNo={}", cameraNo);
+        }
+        return released;
     }
 
     private Integer parseCameraIndex(String cameraNo) {

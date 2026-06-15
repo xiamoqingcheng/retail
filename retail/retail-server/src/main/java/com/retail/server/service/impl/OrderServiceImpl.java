@@ -71,7 +71,15 @@ public class OrderServiceImpl extends ServiceImpl<OrderMapper, Order> implements
         }
 
         // 1. 从 Redis 获取购物车。
-        List<CartVO> cartItems = cartService.getCartList(userId);
+        return checkout(userId, cartService.getCartList(userId));
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long checkout(Long userId, List<CartVO> cartItems) {
+        if (userId == null || userId < 1) {
+            throw new BusinessException(401, "user not logged in");
+        }
         if (CollectionUtils.isEmpty(cartItems)) {
             throw new BusinessException(400, "购物车为空，无法结算");
         }

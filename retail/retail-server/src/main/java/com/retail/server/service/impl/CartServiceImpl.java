@@ -63,7 +63,8 @@ public class CartServiceImpl implements CartService {
                 stringRedisTemplate.opsForHash().put(cartKey, goodsId.toString(), quantity.toString());
             }
         } catch (Exception ex) {
-            throw new BusinessException(500, "购物车服务暂不可用");
+            log.warn("Cart cache write skipped: userId={}, goodsId={}, error={}",
+                    userId, goodsId, ex.getMessage());
         }
     }
 
@@ -81,7 +82,9 @@ public class CartServiceImpl implements CartService {
         try {
             redisEntries = stringRedisTemplate.opsForHash().entries(cartKey);
         } catch (Exception ex) {
-            throw new BusinessException(500, "购物车服务暂不可用");
+            log.warn("Cart cache read failed, return empty list: userId={}, error={}",
+                    userId, ex.getMessage());
+            return Collections.emptyList();
         }
 
         if (redisEntries == null || redisEntries.isEmpty()) {
@@ -155,7 +158,7 @@ public class CartServiceImpl implements CartService {
         try {
             stringRedisTemplate.delete(buildCartKey(userId));
         } catch (Exception ex) {
-            throw new BusinessException(500, "购物车服务暂不可用");
+            log.warn("Cart cache clear skipped: userId={}, error={}", userId, ex.getMessage());
         }
     }
 

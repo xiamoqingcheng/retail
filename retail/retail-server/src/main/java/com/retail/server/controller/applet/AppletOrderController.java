@@ -17,11 +17,14 @@ import com.retail.server.mapper.OrderItemMapper;
 import com.retail.server.mapper.WechatUserMapper;
 import com.retail.server.service.CartService;
 import com.retail.server.service.OrderService;
+import com.retail.server.service.UserBehaviorEventService;
+import com.retail.server.vo.CartVO;
 import com.retail.server.vo.OrderVO;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -36,15 +39,18 @@ public class AppletOrderController {
     private final WechatUserMapper wechatUserMapper;
     private final OrderItemMapper orderItemMapper;
     private final GoodsMapper goodsMapper;
+    private final UserBehaviorEventService userBehaviorEventService;
 
     public AppletOrderController(OrderService orderService, CartService cartService,
                                   WechatUserMapper wechatUserMapper, OrderItemMapper orderItemMapper,
-                                  GoodsMapper goodsMapper) {
+                                  GoodsMapper goodsMapper,
+                                  UserBehaviorEventService userBehaviorEventService) {
         this.orderService = orderService;
         this.cartService = cartService;
         this.wechatUserMapper = wechatUserMapper;
         this.orderItemMapper = orderItemMapper;
         this.goodsMapper = goodsMapper;
+        this.userBehaviorEventService = userBehaviorEventService;
     }
 
     /**
@@ -55,13 +61,11 @@ public class AppletOrderController {
     public Result<Long> checkout(@RequestBody AppletCheckoutRequest request) {
         Long userId = currentUserId();
 
-        if (request != null && request.getItems() != null && !request.getItems().isEmpty()) {
-            cartService.clearCart(userId);
-            for (AppletCheckoutRequest.CartItem item : request.getItems()) {
-                if (item.getId() != null && item.getCount() != null && item.getId() > 0 && item.getCount() > 0) {
-                    cartService.addCart(userId, item.getId(), item.getCount());
-                }
-            }
+        List<CartVO> requestItems = toCartItems(request);
+        if (!requestItems.isEmpty()) {
+            syncCartCache(userId, requestItems);
+            Long orderId = orderService.checkout(userId, requestItems);
+            return Result.success("结算成功", orderId);
         }
 
         Long orderId = orderService.checkout(userId);
@@ -133,6 +137,10 @@ public class AppletOrderController {
         if (!updated) {
             throw new BusinessException(400, "订单状态异常，支付失败");
         }
+
+        List<OrderItem> items = orderItemMapper.selectList(
+                new LambdaQueryWrapper<OrderItem>().eq(OrderItem::getOrderId, orderId));
+        userBehaviorEventService.recordPurchase(userId, orderId, items);
         return Result.success("支付成功", null);
     }
 
@@ -175,7 +183,32 @@ public class AppletOrderController {
         if (!updated) {
             throw new BusinessException(400, "取消订单失败");
         }
+        userBehaviorEventService.recordCancel(userId, orderId, items);
         return Result.success("订单已取消", null);
+    }
+
+    private List<CartVO> toCartItems(AppletCheckoutRequest request) {
+        if (request == null || request.getItems() == null || request.getItems().isEmpty()) {
+            return List.of();
+        }
+        List<CartVO> items = new ArrayList<>();
+        for (AppletCheckoutRequest.CartItem item : request.getItems()) {
+            if (item == null || item.getId() == null || item.getCount() == null) {
+                continue;
+            }
+            items.add(CartVO.builder()
+                    .goodsId(item.getId())
+                    .quantity(item.getCount())
+                    .build());
+        }
+        return items;
+    }
+
+    private void syncCartCache(Long userId, List<CartVO> items) {
+        cartService.clearCart(userId);
+        for (CartVO item : items) {
+            cartService.addCart(userId, item.getGoodsId(), item.getQuantity());
+        }
     }
 
     private Long currentUserId() {

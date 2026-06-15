@@ -180,7 +180,7 @@ App({
         apiBase = requestModule.getBaseUrl ? requestModule.getBaseUrl() : requestModule.BASE_URL;
       } catch (e) {}
     }
-    if (!apiBase) apiBase = 'http://localhost:8080/api';
+    if (!apiBase) apiBase = requestModule && requestModule.DEFAULT_BASE_URL ? requestModule.DEFAULT_BASE_URL : 'http://127.0.0.1:8080/api';
     var base = apiBase.replace(/\/api\/?$/i, '').replace(/\/+$/, '');
 
     // 处理完整的 HTTP URL：替换 localhost 为真实 IP

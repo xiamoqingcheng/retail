@@ -85,17 +85,53 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="createDialogVisible" :title="$t('camera.addTitle')" width="460px" destroy-on-close>
+    <el-dialog v-model="createDialogVisible" :title="$t('camera.addTitle')" width="680px" destroy-on-close>
       <el-form :model="createForm" label-width="108px">
-        <el-form-item :label="$t('camera.hardwareCamera')">
-          <el-select
-            v-model="createForm.cameraNo"
-            :placeholder="$t('camera.selectCameraPlaceholder')"
-            style="width: 100%"
-            :loading="hardwareLoading"
-          >
-            <el-option v-for="item in hardwareOptions" :key="item.value" :label="item.label" :value="item.value" />
-          </el-select>
+        <el-form-item label="摄像头来源">
+          <el-tabs v-model="cameraSourceMode" class="camera-source-tabs">
+            <el-tab-pane label="主机本机" name="local">
+              <div class="camera-source-line">
+                <el-select
+                  v-model="createForm.cameraNo"
+                  :placeholder="$t('camera.selectCameraPlaceholder')"
+                  class="camera-source-select"
+                  :loading="hardwareLoading"
+                  filterable
+                >
+                  <el-option v-for="item in hardwareOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+                <el-button :icon="Refresh" :loading="hardwareLoading" @click="loadHardwareCameras()">刷新</el-button>
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="扩展端扫描" name="agent">
+              <div class="camera-source-line">
+                <el-select
+                  v-model="createForm.cameraNo"
+                  placeholder="请选择扫描到的扩展端摄像头"
+                  class="camera-source-select"
+                  :loading="agentLoading"
+                  filterable
+                >
+                  <el-option v-for="item in agentOptions" :key="item.value" :label="item.label" :value="item.value" />
+                </el-select>
+                <el-button type="primary" :icon="Search" :loading="agentLoading" @click="scanCameraAgents()">自动扫描</el-button>
+              </div>
+            </el-tab-pane>
+
+            <el-tab-pane label="手动填写" name="manual">
+              <div class="manual-agent-grid">
+                <el-input v-model.trim="manualAgentForm.host" placeholder="扩展端 IP，例如 192.168.1.23" clearable />
+                <el-input-number v-model="manualAgentForm.port" :min="1" :max="65535" controls-position="right" />
+                <el-input-number v-model="manualAgentForm.index" :min="0" :max="32" controls-position="right" />
+              </div>
+              <div class="manual-agent-actions">
+                <el-button type="primary" :icon="EditPen" @click="applyManualCameraNo">生成编号</el-button>
+                <el-button :icon="Search" :loading="manualProbeLoading" @click="probeManualAgent">查询扩展端</el-button>
+              </div>
+              <el-input v-model="createForm.cameraNo" readonly placeholder="生成后的摄像头编号会显示在这里" />
+            </el-tab-pane>
+          </el-tabs>
         </el-form-item>
 
         <el-form-item :label="$t('camera.bindShelf')">
@@ -131,9 +167,10 @@
 </template>
 
 <script setup lang="ts" name="cameraSchedule">
-import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
+import { onBeforeUnmount, onMounted, reactive, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
+import { EditPen, Refresh, Search } from "@element-plus/icons-vue";
 import { useUserStore } from "@/stores/modules/user";
 
 const { t } = useI18n();
@@ -141,7 +178,9 @@ const userStore = useUserStore();
 import {
   createCameraBinding,
   deleteCamera,
+  discoverCameraAgents,
   getAvailableHardwareCameras,
+  getCameraAgentAvailable,
   getCameraList,
   getSchedulerConfig,
   stopCameraStream,
@@ -175,6 +214,8 @@ interface HardwareOption {
   value: string;
 }
 
+type CameraSourceMode = "local" | "agent" | "manual";
+
 const saving = ref<boolean>(false);
 const triggering = ref<boolean>(false);
 const tableLoading = ref<boolean>(false);
@@ -184,16 +225,20 @@ const createDialogVisible = ref<boolean>(false);
 const createSaving = ref<boolean>(false);
 const statusSavingCameraId = ref<number | string | null>(null);
 const hardwareLoading = ref<boolean>(false);
+const agentLoading = ref<boolean>(false);
+const manualProbeLoading = ref<boolean>(false);
 const previewDialogVisible = ref<boolean>(false);
 const previewStreamUrl = ref<string>("");
 const previewCameraNo = ref<string>("");
 const previewShelfId = ref<string>("");
+const cameraSourceMode = ref<CameraSourceMode>("local");
 
 const intervalMinutes = ref<number>(5);
 const batchSize = ref<number>(10);
 
 const cameraList = ref<CameraRow[]>([]);
 const hardwareOptions = ref<HardwareOption[]>([]);
+const agentOptions = ref<HardwareOption[]>([]);
 const highlightedCameraId = ref<number | string | null>(null);
 let highlightTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -206,6 +251,34 @@ const editForm = reactive<CameraForm>({
 const createForm = reactive<CreateCameraForm>({
   cameraNo: "",
   shelfId: ""
+});
+
+const manualAgentForm = reactive({
+  host: "",
+  port: 8765,
+  index: 0
+});
+
+const syncCameraSourceSelection = (mode = cameraSourceMode.value) => {
+  if (mode === "local") {
+    const current = hardwareOptions.value.find(item => item.value === createForm.cameraNo);
+    createForm.cameraNo = current?.value || hardwareOptions.value[0]?.value || "";
+    return;
+  }
+
+  if (mode === "agent") {
+    const current = agentOptions.value.find(item => item.value === createForm.cameraNo);
+    createForm.cameraNo = current?.value || agentOptions.value[0]?.value || "";
+    return;
+  }
+
+  if (!createForm.cameraNo.startsWith("agent:")) {
+    createForm.cameraNo = "";
+  }
+};
+
+watch(cameraSourceMode, mode => {
+  syncCameraSourceSelection(mode);
 });
 
 const normalizeCameraRow = (item: any): CameraRow => {
@@ -326,10 +399,44 @@ const openEditDialog = (row: CameraRow) => {
   editDialogVisible.value = true;
 };
 
-const openCreateDialog = async () => {
-  createDialogVisible.value = true;
-  createForm.cameraNo = "";
-  createForm.shelfId = "";
+const cameraAgentToOptions = (agents: any[]): HardwareOption[] => {
+  const optionMap = new Map<string, HardwareOption>();
+
+  agents.forEach(agent => {
+    const host = String(agent?.host || "").trim();
+    const port = Number(agent?.port || 8765);
+    if (!host || !Number.isFinite(port)) return;
+
+    const cameras = Array.isArray(agent?.cameras) ? agent.cameras : [];
+    if (cameras.length > 0) {
+      cameras.forEach((camera: any) => {
+        const index = camera?.index ?? "";
+        const value = String(camera?.id || `agent:${host}:${port}:${index}`);
+        if (!value || optionMap.has(value)) return;
+        const name = camera?.name ? ` - ${camera.name}` : "";
+        optionMap.set(value, {
+          label: `${host}:${port} / ${t("camera.camera")} ${index}${name}`,
+          value
+        });
+      });
+      return;
+    }
+
+    const indexes = Array.isArray(agent?.available_indexes) ? agent.available_indexes : [];
+    indexes.forEach((index: number | string) => {
+      const value = `agent:${host}:${port}:${index}`;
+      if (optionMap.has(value)) return;
+      optionMap.set(value, {
+        label: `${host}:${port} / ${t("camera.camera")} ${index}`,
+        value
+      });
+    });
+  });
+
+  return Array.from(optionMap.values());
+};
+
+const loadHardwareCameras = async (showEmptyMessage = true) => {
   hardwareOptions.value = [];
 
   hardwareLoading.value = true;
@@ -345,14 +452,124 @@ const openCreateDialog = async () => {
       label: `${t("camera.camera")} ${index}`,
       value: String(index)
     }));
+    if (cameraSourceMode.value === "local") {
+      syncCameraSourceSelection("local");
+    }
 
-    if (hardwareOptions.value.length === 0) {
+    if (showEmptyMessage && hardwareOptions.value.length === 0) {
       ElMessage.warning(t("camera.noHardware"));
     }
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || t("camera.bindFailed"));
   } finally {
     hardwareLoading.value = false;
+  }
+};
+
+const scanCameraAgents = async (showResultMessage = true) => {
+  agentLoading.value = true;
+  try {
+    const res: any = await discoverCameraAgents(1800);
+    if (Number(res?.code) !== 200) {
+      ElMessage.error(res?.message || res?.msg || "扫描扩展端失败");
+      return;
+    }
+
+    const agents = Array.isArray(res?.data) ? res.data : [];
+    agentOptions.value = cameraAgentToOptions(agents);
+    if (agentOptions.value.length > 0) {
+      cameraSourceMode.value = "agent";
+      syncCameraSourceSelection("agent");
+      if (showResultMessage) {
+        ElMessage.success(`已发现 ${agentOptions.value.length} 个扩展端摄像头`);
+      }
+    } else {
+      if (cameraSourceMode.value === "agent") {
+        createForm.cameraNo = "";
+      }
+      if (showResultMessage) {
+        ElMessage.warning("未发现扩展端，可使用手动填写");
+      }
+    }
+  } catch (error: any) {
+    if (showResultMessage) {
+      ElMessage.error(error?.response?.data?.message || error?.message || "扫描扩展端失败");
+    }
+  } finally {
+    agentLoading.value = false;
+  }
+};
+
+const normalizeManualAgent = () => {
+  const host = manualAgentForm.host.trim();
+  const port = Number(manualAgentForm.port);
+  const index = Number(manualAgentForm.index);
+
+  if (!host) {
+    ElMessage.warning("请输入扩展端 IP");
+    return null;
+  }
+  if (!Number.isInteger(port) || port < 1 || port > 65535) {
+    ElMessage.warning("端口必须在 1 到 65535 之间");
+    return null;
+  }
+  if (!Number.isInteger(index) || index < 0) {
+    ElMessage.warning("摄像头索引必须大于等于 0");
+    return null;
+  }
+
+  return { host, port, index };
+};
+
+const applyManualCameraNo = () => {
+  const manual = normalizeManualAgent();
+  if (!manual) return;
+  createForm.cameraNo = `agent:${manual.host}:${manual.port}:${manual.index}`;
+};
+
+const probeManualAgent = async () => {
+  const manual = normalizeManualAgent();
+  if (!manual) return;
+
+  manualProbeLoading.value = true;
+  try {
+    const res: any = await getCameraAgentAvailable(manual.host, manual.port);
+    if (Number(res?.code) !== 200) {
+      ElMessage.error(res?.message || res?.msg || "查询扩展端失败");
+      return;
+    }
+
+    const options = cameraAgentToOptions([res?.data]);
+    if (options.length === 0) {
+      ElMessage.warning("该扩展端未返回可用摄像头");
+      return;
+    }
+    agentOptions.value = options;
+    cameraSourceMode.value = "agent";
+    createForm.cameraNo = options.find(item => item.value.endsWith(`:${manual.index}`))?.value || options[0].value;
+    ElMessage.success(`已获取 ${options.length} 个扩展端摄像头`);
+  } catch (error: any) {
+    ElMessage.error(error?.response?.data?.message || error?.message || "查询扩展端失败");
+  } finally {
+    manualProbeLoading.value = false;
+  }
+};
+
+const openCreateDialog = async () => {
+  createDialogVisible.value = true;
+  cameraSourceMode.value = "local";
+  createForm.cameraNo = "";
+  createForm.shelfId = "";
+  hardwareOptions.value = [];
+  agentOptions.value = [];
+  manualAgentForm.host = "";
+  manualAgentForm.port = 8765;
+  manualAgentForm.index = 0;
+
+  await Promise.all([loadHardwareCameras(false), scanCameraAgents(false)]);
+  if (!createForm.cameraNo && hardwareOptions.value.length > 0) {
+    cameraSourceMode.value = "local";
+    createForm.cameraNo = hardwareOptions.value[0].value;
   }
 };
 
@@ -425,6 +642,9 @@ const handleStatusChange = async (row: CameraRow, val: string | number | boolean
   try {
     await updateCameraStatus(String(row.id), nextStatus);
     row.status = nextStatus;
+    if (nextStatus === 0) {
+      closePreviewIfCamera(row.cameraNo);
+    }
     ElMessage.success(nextStatus === 1 ? t("camera.enabledSuccess") : t("camera.disabledSuccess"));
   } catch {
     row.status = previousStatus;
@@ -452,6 +672,7 @@ const handleDelete = async (row: CameraRow) => {
     }
 
     ElMessage.success(t("camera.deleteSuccess"));
+    closePreviewIfCamera(row.cameraNo);
     await loadCameraList();
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || t("camera.deleteFailed"));
@@ -475,15 +696,31 @@ const onStreamError = () => {
   previewStreamUrl.value = "";
 };
 
+const closePreviewIfCamera = (cameraNo: string) => {
+  if (previewCameraNo.value !== cameraNo) {
+    return;
+  }
+  previewDialogVisible.value = false;
+  stopPreview();
+};
+
 const handleRowClick = (row: CameraRow) => {
   if (!row?.cameraNo) {
+    return;
+  }
+  if (row.status !== 1) {
+    ElMessage.warning("摄像头已离线，不能预览");
     return;
   }
 
   stopPreview();
   previewCameraNo.value = row.cameraNo;
   previewShelfId.value = row.shelfId || "";
-  previewStreamUrl.value = `/api/admin/camera/stream/${row.cameraNo}?token=${userStore.token}`;
+  const params = new URLSearchParams({
+    cameraNo: row.cameraNo,
+    token: userStore.token || ""
+  });
+  previewStreamUrl.value = `/api/admin/camera/stream?${params.toString()}`;
   previewDialogVisible.value = true;
 };
 
@@ -545,6 +782,48 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.camera-source-tabs {
+  width: 100%;
+}
+
+.camera-source-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.camera-source-select {
+  flex: 1;
+  min-width: 0;
+}
+
+.manual-agent-grid {
+  display: grid;
+  grid-template-columns: minmax(220px, 1fr) 130px 120px;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.manual-agent-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+@media (max-width: 720px) {
+  .camera-source-line,
+  .manual-agent-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .manual-agent-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .preview-meta {

@@ -39,6 +39,7 @@ public class WebConfig implements WebMvcConfigurer {
                         "/api/applet/feedback",
                         "/api/applet/home/ads",
                         "/api/applet/search/text",
+                        "/api/applet/search/hot",
                         "/api/applet/search/image",
                         "/api/applet/scan",
                         "/api/goods/categories",

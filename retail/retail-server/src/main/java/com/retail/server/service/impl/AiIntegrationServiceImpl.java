@@ -8,6 +8,7 @@ import com.retail.server.service.AiIntegrationService;
 import com.retail.server.service.GoodsService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -45,7 +46,9 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
     @Value("${ai.service-url:http://localhost:8000}")
     private String aiServiceUrl;
 
-    public AiIntegrationServiceImpl(RestTemplate restTemplate, GoodsService goodsService) {
+    public AiIntegrationServiceImpl(
+            @Qualifier("aiRecognitionRestTemplate") RestTemplate restTemplate,
+            GoodsService goodsService) {
         this.restTemplate = restTemplate;
         this.goodsService = goodsService;
     }
@@ -131,7 +134,7 @@ public class AiIntegrationServiceImpl implements AiIntegrationService {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(payload, headers);
 
-        int maxRetries = 2;
+        int maxRetries = 0;
         for (int attempt = 0; attempt <= maxRetries; attempt++) {
             try {
                 ResponseEntity<List<PythonCenterItem>> response = restTemplate.exchange(

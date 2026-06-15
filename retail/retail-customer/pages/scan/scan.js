@@ -38,6 +38,9 @@ Page({
     // 图片识别（保留旧逻辑）
     uploadedImage: null,
     albumDetectedItems: [],
+    albumSelectedCount: 0,
+    albumSelectedTotalText: '0.00',
+    cartTotalCount: 0,
     isLoading: false
   },
 
@@ -50,7 +53,8 @@ Page({
       screenWidth: screenW,
       screenHeight: screenH,
       panelHeight: panelH,
-      panelMaxY: panelH
+      panelMaxY: panelH,
+      cartTotalCount: this._getCartTotalCount()
     });
     this._cameraContext = null;
     this._touchStartY = 0;
@@ -60,6 +64,10 @@ Page({
 
   onUnload() {
     this._cameraContext = null;
+  },
+
+  onShow() {
+    this._refreshCartTotal();
   },
 
   // ============ 模式选择 ============
@@ -91,6 +99,7 @@ Page({
       isDetecting: false,
       selectedCount: 0,
       selectedTotalText: '0.00',
+      cartTotalCount: this._getCartTotalCount(),
       panelY: 0,
       panelTransition: true
     }, () => {
@@ -99,7 +108,10 @@ Page({
   },
 
   selectAlbumMode() {
-    this.setData({ mode: 'album' });
+    this.setData({
+      mode: 'album',
+      cartTotalCount: this._getCartTotalCount()
+    });
     this._chooseAlbumImage();
   },
 
@@ -111,6 +123,9 @@ Page({
       uploadedImage: null,
       detectedItems: [],
       albumDetectedItems: [],
+      albumSelectedCount: 0,
+      albumSelectedTotalText: '0.00',
+      cartTotalCount: this._getCartTotalCount(),
       panelY: 0
     });
   },
@@ -138,6 +153,7 @@ Page({
           detectedItems: [],
           selectedCount: 0,
           selectedTotalText: '0.00',
+          cartTotalCount: this._getCartTotalCount(),
           panelY: 0,
           panelTransition: true
         });
@@ -179,7 +195,7 @@ Page({
           })
           .catch((err) => {
             console.error('识别失败:', err);
-            if (retryCount < 2) {
+            if (retryCount < 1) {
               this._doDetectRequest(path, retryCount + 1);
             } else {
               this._handleResult([]);
@@ -266,7 +282,8 @@ Page({
         detectedItems: detectedItems,
         isDetecting: false,
         selectedCount: totals.count,
-        selectedTotalText: totals.total
+        selectedTotalText: totals.total,
+        cartTotalCount: this._getCartTotalCount()
       });
     });
   },
@@ -313,6 +330,7 @@ Page({
       isDetecting: false,
       selectedCount: 0,
       selectedTotalText: '0.00',
+      cartTotalCount: this._getCartTotalCount(),
       panelY: 0,
       panelTransition: true
     }, () => {
@@ -331,6 +349,41 @@ Page({
       }
     });
     return { count: count, total: total.toFixed(2) };
+  },
+
+  _getCartTotalCount() {
+    if (app && typeof app.getTotalCount === 'function') {
+      return app.getTotalCount();
+    }
+    return (app.globalData.cartList || []).reduce((total, item) => total + (Number(item.count) || 0), 0);
+  },
+
+  _refreshCartTotal() {
+    this.setData({ cartTotalCount: this._getCartTotalCount() });
+  },
+
+  _checkoutDetectedItems(items) {
+    const selectedItems = (items || [])
+      .filter((item) => (Number(item.count) || 0) > 0)
+      .map((item) => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        image: item.image,
+        count: item.count,
+        selected: true
+      }));
+
+    if (selectedItems.length === 0) {
+      wx.showToast({ title: '请先选择商品', icon: 'none' });
+      return;
+    }
+
+    const totalAmount = selectedItems.reduce((sum, item) => {
+      return sum + (Number(item.price) || 0) * (Number(item.count) || 0);
+    }, 0);
+    wx.setStorageSync('checkoutData', { items: selectedItems, totalAmount: totalAmount });
+    wx.navigateTo({ url: '/pages/order/order?type=checkout' });
   },
 
   onIncrease(e) {
@@ -357,7 +410,8 @@ Page({
     this.setData({
       detectedItems: items,
       selectedCount: totals.count,
-      selectedTotalText: totals.total
+      selectedTotalText: totals.total,
+      cartTotalCount: this._getCartTotalCount()
     });
   },
 
@@ -380,7 +434,8 @@ Page({
     this.setData({
       detectedItems: items,
       selectedCount: totals.count,
-      selectedTotalText: totals.total
+      selectedTotalText: totals.total,
+      cartTotalCount: this._getCartTotalCount()
     });
   },
 
@@ -391,7 +446,19 @@ Page({
       wx.showToast({ title: '请先选择商品', icon: 'none' });
       return;
     }
+    this._checkoutDetectedItems(this.data.detectedItems);
+  },
+
+  goCart() {
     wx.switchTab({ url: '/pages/cart/cart' });
+  },
+
+  goAlbumSettlement() {
+    if (this.data.albumSelectedCount === 0) {
+      wx.showToast({ title: '请先选择商品', icon: 'none' });
+      return;
+    }
+    this._checkoutDetectedItems(this.data.albumDetectedItems);
   },
 
   // ============ 退出/返回 ============
@@ -428,6 +495,9 @@ Page({
       uploadedImage: imagePath,
       isLoading: true,
       albumDetectedItems: [],
+      albumSelectedCount: 0,
+      albumSelectedTotalText: '0.00',
+      cartTotalCount: this._getCartTotalCount(),
       displayWidth: 0,
       displayHeight: 0
     });
@@ -466,7 +536,7 @@ Page({
           })
           .catch((err) => {
             console.error('识别失败:', err);
-            if (retryCount < 2) {
+            if (retryCount < 1) {
               this._doAlbumDetectRequest(imagePath, retryCount + 1);
             } else {
               wx.hideLoading();
@@ -486,7 +556,13 @@ Page({
 
   _processAlbumResult(items, imagePath) {
     if (!items || items.length === 0) {
-      this.setData({ albumDetectedItems: [], isLoading: false });
+      this.setData({
+        albumDetectedItems: [],
+        albumSelectedCount: 0,
+        albumSelectedTotalText: '0.00',
+        cartTotalCount: this._getCartTotalCount(),
+        isLoading: false
+      });
       wx.showToast({ title: '未识别到商品', icon: 'none' });
       return;
     }
@@ -551,7 +627,14 @@ Page({
     });
 
     Promise.all(tasks).then(() => {
-      this.setData({ albumDetectedItems: list, isLoading: false });
+      const totals = this._calcSelected(list);
+      this.setData({
+        albumDetectedItems: list,
+        albumSelectedCount: totals.count,
+        albumSelectedTotalText: totals.total,
+        cartTotalCount: this._getCartTotalCount(),
+        isLoading: false
+      });
       wx.showToast({ title: '识别到 ' + list.length + ' 个商品', icon: 'success' });
     });
   },
@@ -570,7 +653,13 @@ Page({
     } else {
       app.updateCartCount(id, newCount);
     }
-    this.setData({ albumDetectedItems: items });
+    const totals = this._calcSelected(items);
+    this.setData({
+      albumDetectedItems: items,
+      albumSelectedCount: totals.count,
+      albumSelectedTotalText: totals.total,
+      cartTotalCount: this._getCartTotalCount()
+    });
   },
 
   onAlbumDecrease(e) {
@@ -583,13 +672,22 @@ Page({
     items[idx] = Object.assign({}, item, { count: newCount });
     if (newCount === 0) app.removeFromCart(id);
     else app.updateCartCount(id, newCount);
-    this.setData({ albumDetectedItems: items });
+    const totals = this._calcSelected(items);
+    this.setData({
+      albumDetectedItems: items,
+      albumSelectedCount: totals.count,
+      albumSelectedTotalText: totals.total,
+      cartTotalCount: this._getCartTotalCount()
+    });
   },
 
   reupload() {
     this.setData({
       uploadedImage: null,
       albumDetectedItems: [],
+      albumSelectedCount: 0,
+      albumSelectedTotalText: '0.00',
+      cartTotalCount: this._getCartTotalCount(),
       isLoading: false
     });
     this._chooseAlbumImage();

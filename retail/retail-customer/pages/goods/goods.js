@@ -46,9 +46,11 @@ Page({
             app.resolveDisplayImage(goods.image).then(image => {
               goods.image = image;
               this.setData({ goods: goods, loading: false });
+              this.recordViewBehavior(goods.id);
             });
           } else {
             this.setData({ goods: goods, loading: false });
+            this.recordViewBehavior(goods.id);
           }
         } else {
           wx.showToast({
@@ -83,6 +85,15 @@ Page({
       });
     }
   }),
+
+  recordViewBehavior(goodsId) {
+    const token = wx.getStorageSync('token');
+    if (!token || !goodsId) return;
+    post('/applet/recommend/behavior', {
+      eventType: 'VIEW',
+      goodsId: Number(goodsId)
+    }, false).catch(() => {});
+  },
 
   goBack() {
     wx.navigateBack();

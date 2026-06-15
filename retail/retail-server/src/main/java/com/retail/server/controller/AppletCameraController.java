@@ -20,6 +20,10 @@ import java.util.List;
 @RequestMapping("/api/applet")
 public class AppletCameraController {
 
+    private static final int DEFAULT_TOP_K = 3;
+    private static final int MAX_TOP_K = 10;
+    private static final int MAX_IMAGE_BASE64_LENGTH = 8_000_000;
+
     private final AiIntegrationService aiIntegrationService;
 
     public AppletCameraController(AiIntegrationService aiIntegrationService) {
@@ -35,8 +39,14 @@ public class AppletCameraController {
             throw new BusinessException(400, "image_base64 不能为空");
         }
 
-        int k = request.k() == null ? 3 : request.k();
-        List<AppletScanGoodsDTO> data = aiIntegrationService.getTopKGoodsFromImage(request.imageBase64(), k);
+        String imageBase64 = request.imageBase64().trim();
+        if (imageBase64.length() > MAX_IMAGE_BASE64_LENGTH) {
+            throw new BusinessException(413, "image_base64 is too large");
+        }
+
+        int requestedK = request.k() == null ? DEFAULT_TOP_K : request.k();
+        int k = Math.min(Math.max(requestedK, 1), MAX_TOP_K);
+        List<AppletScanGoodsDTO> data = aiIntegrationService.getTopKGoodsFromImage(imageBase64, k);
         return Result.success("识别成功", data);
     }
 }

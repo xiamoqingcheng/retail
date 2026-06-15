@@ -2,6 +2,7 @@ package com.retail.server.mapper;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
 import com.retail.server.entity.Goods;
+import com.retail.server.recommendation.model.GoodsSearchDocument;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
@@ -31,6 +32,34 @@ public interface GoodsMapper extends BaseMapper<Goods> {
 
     @Select("SELECT id FROM sys_goods WHERE status = 1 ORDER BY id LIMIT #{limit} OFFSET #{offset}")
     List<Long> selectGoodsIdsByOffset(@Param("limit") int limit, @Param("offset") int offset);
+
+    @Select("""
+            <script>
+            SELECT g.id, g.name, g.barcode, g.category_id AS categoryId, c.name AS categoryName,
+                   g.price, g.stock, g.shelf_id AS shelfId, g.image_url AS imageUrl
+            FROM sys_goods g
+            LEFT JOIN sys_goods_category c ON c.id = g.category_id
+            WHERE g.status = 1
+            <if test='categoryId != null and categoryId &gt; 0'>
+              AND g.category_id = #{categoryId}
+            </if>
+            ORDER BY g.update_time DESC, g.id ASC
+            </script>
+            """)
+    List<GoodsSearchDocument> selectActiveSearchDocuments(@Param("categoryId") Long categoryId);
+
+    @Select("""
+            <script>
+            SELECT g.id, g.name, g.barcode, g.category_id AS categoryId, c.name AS categoryName,
+                   g.price, g.stock, g.shelf_id AS shelfId, g.image_url AS imageUrl
+            FROM sys_goods g
+            LEFT JOIN sys_goods_category c ON c.id = g.category_id
+            WHERE g.status = 1
+              AND g.id IN
+              <foreach item='id' collection='ids' open='(' separator=',' close=')'>#{id}</foreach>
+            </script>
+            """)
+    List<GoodsSearchDocument> selectSearchDocumentsByIds(@Param("ids") List<Long> ids);
 
     @Update("""
         <script>

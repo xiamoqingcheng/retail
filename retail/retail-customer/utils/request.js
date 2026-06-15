@@ -1,7 +1,8 @@
 // 开发环境 API 地址
 // 模拟器：localhost 即可；真机调试可在“系统设置”中改成电脑局域网 IP。
 var STORAGE_KEY = 'apiBaseUrl';
-var DEFAULT_BASE_URL = 'https://zestfully-pushup-unraveled.ngrok-free.dev/api';
+var DEFAULT_BASE_URL = 'http://127.0.0.1:8080/api';
+var REQUEST_TIMEOUT_MS = 20000;
 
 function normalizeBaseUrl(url) {
   if (!url || typeof url !== 'string') return DEFAULT_BASE_URL;
@@ -87,6 +88,7 @@ function request(options) {
       url: baseUrl + options.url,
       method: options.method || 'GET',
       data: options.data || {},
+      timeout: options.timeout || REQUEST_TIMEOUT_MS,
       header: {
         'Content-Type': 'application/json',
         'Authorization': token ? 'Bearer ' + token : '',

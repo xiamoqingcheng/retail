@@ -16,7 +16,7 @@ Page({
     searchKey: '',
     searchFocus: false,
     showHistory: false,
-    hotSearch: ['农夫山泉', '奥利奥', '可口可乐', '士力架', '百事可乐', '绿箭'],
+    hotSearch: [],
     historySearch: [],
     goodsList: [],
     recommendations: [],
@@ -31,7 +31,19 @@ Page({
     const historySearch = wx.getStorageSync('historySearch') || [];
     this.setData({ historySearch: historySearch });
     this.loadCategories();
+    this.loadHotSearch();
     this.loadRecommendations();
+  },
+
+  loadHotSearch() {
+    get('/applet/search/hot', { k: 8, m: 30 }, false)
+      .then(res => {
+        const hotSearch = Array.isArray(res.data) ? res.data : [];
+        this.setData({ hotSearch: hotSearch });
+      })
+      .catch((err) => {
+        console.error('加载热门搜索失败:', err);
+      });
   },
 
   loadCategories() {
@@ -133,18 +145,26 @@ Page({
   },
 
   throttleSearch: throttle(function (value) {
-    this.performSearch(value);
+    this.performSearch(value, { saveHistory: false, track: false });
   }, 500),
 
   onSearch: debounce(function () {
     const searchKey = this.data.searchKey;
     if (searchKey) {
-      this.performSearch(searchKey);
+      this.performSearch(searchKey, { saveHistory: true, track: true });
     }
   }),
 
-  performSearch(key) {
-    this.saveSearchHistory(key);
+  performSearch(key, options) {
+    const searchOptions = options || {};
+    const trimmedKey = (key || '').trim();
+    if (!trimmedKey) {
+      this.setData({ goodsList: [] });
+      return;
+    }
+    if (searchOptions.saveHistory) {
+      this.saveSearchHistory(trimmedKey);
+    }
     this.setData({
       showHistory: false
     });
@@ -154,31 +174,32 @@ Page({
       mask: true
     });
 
-    const trimmedKey = (key || '').trim();
-    const params = { page: 1, size: 20, name: trimmedKey };
+    const params = { size: 50, query: trimmedKey };
     if (this.data.currentCategoryId > 0) {
       params.categoryId = this.data.currentCategoryId;
     }
 
-    get('/goods/page', params, false)
+    get('/applet/search/text', params, false)
       .then(res => {
         wx.hideLoading();
-        const records = (res.data && res.data.records) || [];
+        const records = res.data || [];
         if (records.length > 0) {
-          const lowerKey = trimmedKey.toLowerCase();
-          const sorted = records
-            .map(item => ({
-              id: item.id, name: item.name, price: item.price,
-              image: item.imageUrl ? app.getImageUrl(item.imageUrl) : '/assets/goods/default.png',
-              shelfId: item.shelfId, categoryName: item.categoryName || '',
-              _score: item.name && item.name.toLowerCase().includes(lowerKey) ? 1 : 0
-            }))
-            .sort((a, b) => b._score - a._score)
-            .map(({ _score, ...rest }) => rest);
-          const filtered = this.filterAndSort(sorted);
+          const semanticResults = records.map(item => ({
+            id: item.id,
+            name: item.name,
+            price: item.price,
+            image: item.imageUrl ? app.getImageUrl(item.imageUrl) : '/assets/goods/default.png',
+            shelfId: item.shelfId,
+            categoryName: item.categoryName || '',
+            relevance: item.relevance || 0
+          }));
+          const filtered = this.filterAndSort(semanticResults);
           app.cacheImages(filtered, 'image').then(() => {
             this.setData({ goodsList: filtered });
           });
+          if (searchOptions.track) {
+            this.recordSearchBehavior(trimmedKey);
+          }
         } else {
           this.setData({ goodsList: [] });
           wx.showToast({ title: '未找到相关商品', icon: 'none' });
@@ -261,7 +282,7 @@ Page({
       searchKey: key,
       showHistory: false
     });
-    this.performSearch(key);
+    this.performSearch(key, { saveHistory: true, track: true });
   },
 
   onHistorySearch(e) {
@@ -270,7 +291,7 @@ Page({
       searchKey: key,
       showHistory: false
     });
-    this.performSearch(key);
+    this.performSearch(key, { saveHistory: true, track: true });
   },
 
   cancelSearch() {
@@ -290,6 +311,20 @@ Page({
     wx.navigateTo({
       url: '/pages/goods/goods?id=' + id
     });
+  },
+
+  recordSearchBehavior(keyword) {
+    this.trackBehavior('SEARCH', { keyword: keyword });
+  },
+
+  trackBehavior(eventType, payload) {
+    const token = wx.getStorageSync('token');
+    if (!token) return;
+
+    post('/applet/recommend/behavior', {
+      eventType: eventType,
+      ...(payload || {})
+    }, false).catch(() => {});
   },
 
   _resolveArr(listName) {

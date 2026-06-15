@@ -56,12 +56,18 @@ function Start-LoggedProcess(
 ) {
     $outFile = Join-Path $LogDir "$LogPrefix.out.log"
     $errFile = Join-Path $LogDir "$LogPrefix.err.log"
-    Start-Process -FilePath $FilePath `
-        -ArgumentList $ArgumentList `
-        -WorkingDirectory $WorkingDirectory `
-        -WindowStyle Hidden `
-        -RedirectStandardOutput $outFile `
-        -RedirectStandardError $errFile | Out-Null
+    $startParams = @{
+        FilePath = $FilePath
+        WorkingDirectory = $WorkingDirectory
+        WindowStyle = "Hidden"
+        RedirectStandardOutput = $outFile
+        RedirectStandardError = $errFile
+    }
+    if ($ArgumentList -and $ArgumentList.Count -gt 0) {
+        $startParams.ArgumentList = $ArgumentList
+    }
+
+    Start-Process @startParams | Out-Null
     Write-Host "  started $Name, logs: $outFile" -ForegroundColor DarkGray
 }
 
