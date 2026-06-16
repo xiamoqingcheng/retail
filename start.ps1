@@ -4,21 +4,25 @@ param(
     [switch]$SkipAdmin
 )
 
+# 总启动脚本（本地联调）。按序拉起 MySQL -> Redis -> 建库导数据 -> AI -> 后端 -> 管理端，
+# 应用服务复用各自目录下的 run.ps1（单一事实来源）。
+# 启动后本窗口持续监管：Ctrl+C 或关闭窗口都会通过 Win32 Job(kill-on-close) 统一停止全部子进程。
+# 想在脚本外停止，可另跑 .\stop.ps1。
+
 $ErrorActionPreference = "Continue"
 
 $ProjectDir = $PSScriptRoot
-$RetailDir = Join-Path $ProjectDir "retail"
-$LogDir = Join-Path $RetailDir "log"
-$DbFile = Join-Path $RetailDir "retail_db.sql"
-$GoodsFile = Join-Path $RetailDir "retail_goods.sql"
-$AiDir = Join-Path $RetailDir "retail-ai"
-$BackendDir = Join-Path $RetailDir "retail-server"
-$AdminDir = Join-Path $RetailDir "retail-admin-pro"
+$LogDir = Join-Path $ProjectDir "log"
+$DbFile = Join-Path $ProjectDir "database\retail_db.sql"
+$GoodsFile = Join-Path $ProjectDir "database\retail_goods.sql"
+$AiDir = Join-Path $ProjectDir "services\ai"
+$BackendDir = Join-Path $ProjectDir "services\server"
+$AdminDir = Join-Path $ProjectDir "apps\admin-web"
 $BundledMaven = Join-Path $ProjectDir "apache-maven-3.9.14\bin\mvn.cmd"
 $BundledNpm = Join-Path $ProjectDir "node-v24.14.1-win-x64\npm.cmd"
 $BundledRedis = Join-Path $ProjectDir "Redis-8.6.2-Windows-x64-msys2\Redis-8.6.2-Windows-x64-msys2\redis-server.exe"
 $DefaultMySqlBin = "D:\mysql-9.6.0-winx64\bin"
-$DefaultPython = "D:\miniconda3\python.exe"
+$DefaultPython = "D:\Documents\miniconda3\envs\train\python.exe"
 
 $script:ManagedProcesses = New-Object System.Collections.Generic.List[object]
 $script:CleanupDone = $false
@@ -217,6 +221,17 @@ function Start-ManagedProcess(
     return $process
 }
 
+function Start-ServiceScript([string]$Name, [string]$ServiceDir, [string]$LogPrefix) {
+    $runScript = Join-Path $ServiceDir "run.ps1"
+    if (-not (Test-Path -LiteralPath $runScript)) {
+        Fail "$Name run.ps1 not found at $runScript"
+        return $null
+    }
+    return Start-ManagedProcess $Name "powershell.exe" `
+        @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $runScript) `
+        $ServiceDir $LogPrefix
+}
+
 function Step([string]$Text) {
     Write-Host ""
     Write-Host $Text -ForegroundColor Cyan
@@ -273,11 +288,6 @@ function Stop-ManagedServices {
     Write-Host "  [OK] Cleanup complete" -ForegroundColor Green
 }
 
-if (-not (Test-Path -LiteralPath $RetailDir)) {
-    Write-Error "Retail directory not found: $RetailDir"
-    exit 1
-}
-
 if (-not $MySqlBin) {
     $MySqlBin = $DefaultMySqlBin
 }
@@ -289,15 +299,12 @@ if (-not $PythonExe) {
 $MySqlServer = Resolve-CommandPath (Join-Path $MySqlBin "mysqld.exe") "mysqld"
 $MySqlClient = Resolve-CommandPath (Join-Path $MySqlBin "mysql.exe") "mysql"
 $RedisServer = Resolve-CommandPath $BundledRedis "redis-server"
-$Maven = Resolve-CommandPath $BundledMaven "mvn"
-$Npm = Resolve-CommandPath $BundledNpm "npm"
-$Python = Resolve-CommandPath $PythonExe "python"
 
 try {
     Initialize-KillOnCloseJob
 
     Write-Host "=== Retail System Startup ===" -ForegroundColor Cyan
-    Write-Host "Project: $RetailDir"
+    Write-Host "Project: $ProjectDir"
 
     Step "[1/6] MySQL 3306"
     if (Test-Port 3306) {
@@ -329,7 +336,7 @@ try {
         if ($LASTEXITCODE -eq 0) {
             Ok "retail_db is ready"
         } elseif (Test-Path -LiteralPath $DbFile) {
-            Warn "retail_db not found; importing retail_db.sql"
+            Warn "retail_db not found; importing database\retail_db.sql"
             Get-Content -Encoding UTF8 -LiteralPath $DbFile | & $MySqlClient -u root 2>$null
             if ($LASTEXITCODE -eq 0) {
                 Ok "retail_db.sql imported"
@@ -341,28 +348,24 @@ try {
                 Fail "database import failed"
             }
         } else {
-            Fail "retail_db.sql not found"
+            Fail "database\retail_db.sql not found"
         }
     }
 
     Step "[4/6] AI service 8000"
     if (Test-Port 8000) {
         Show-PortAlreadyRunning "AI service" 8000
-    } elseif ($Python) {
-        Start-ManagedProcess "AI service" $Python @("main.py") $AiDir "ai" | Out-Null
-        if (Wait-Port 8000 35) { Ok "AI service started" } else { Warn "AI service is still starting or failed; check log\ai.err.log" }
     } else {
-        Fail "python not found. Set PYTHON_EXE or add Python to PATH."
+        Start-ServiceScript "AI service" $AiDir "ai" | Out-Null
+        if (Wait-Port 8000 35) { Ok "AI service started" } else { Warn "AI service is still starting or failed; check log\ai.err.log" }
     }
 
     Step "[5/6] Backend API 8080"
     if (Test-Port 8080) {
         Show-PortAlreadyRunning "Backend API" 8080
-    } elseif ($Maven) {
-        Start-ManagedProcess "Backend API" $Maven @("spring-boot:run", "-q") $BackendDir "backend" | Out-Null
-        if (Wait-Port 8080 75) { Ok "Backend API started" } else { Warn "Backend API is still starting or failed; check log\backend.err.log" }
     } else {
-        Fail "Maven not found. Use bundled apache-maven-3.9.14 or add mvn to PATH."
+        Start-ServiceScript "Backend API" $BackendDir "backend" | Out-Null
+        if (Wait-Port 8080 90) { Ok "Backend API started" } else { Warn "Backend API is still starting or failed; check log\backend.err.log" }
     }
 
     Step "[6/6] Admin UI 8848"
@@ -370,11 +373,9 @@ try {
         Warn "Admin UI skipped"
     } elseif (Test-Port 8848) {
         Show-PortAlreadyRunning "Admin UI" 8848
-    } elseif ($Npm) {
-        Start-ManagedProcess "Admin UI" $Npm @("run", "dev") $AdminDir "admin" | Out-Null
-        if (Wait-Port 8848 35) { Ok "Admin UI started" } else { Warn "Admin UI is still starting or failed; check log\admin.err.log" }
     } else {
-        Fail "npm not found. Use bundled node-v24.14.1-win-x64 or add npm to PATH."
+        Start-ServiceScript "Admin UI" $AdminDir "admin" | Out-Null
+        if (Wait-Port 8848 60) { Ok "Admin UI started" } else { Warn "Admin UI is still starting (first run installs npm deps) or failed; check log\admin.err.log" }
     }
 
     Write-Host ""
@@ -382,7 +383,7 @@ try {
     Write-Host "Admin:  http://localhost:8848"
     Write-Host "API:    http://localhost:8080"
     Write-Host "AI:     http://localhost:8000"
-    Write-Host "Applet: open $RetailDir\retail-customer in WeChat DevTools"
+    Write-Host "Applet: open $AdminDir\..\customer-miniapp in WeChat DevTools"
     Write-Host ""
     Write-Host "This window is now supervising started services." -ForegroundColor Green
     Write-Host "Press Ctrl+C to stop all managed services. Closing this terminal also kills them." -ForegroundColor Green

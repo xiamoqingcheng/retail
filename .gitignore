@@ -11,6 +11,7 @@ out/
 *.class
 *.jar
 *.war
+*.timestamp-*.mjs
 
 # Python
 __pycache__/
@@ -64,6 +65,7 @@ mysql-*/
 jdk*/
 *-backup-*/
 .skill/
+ngrok.exe
 
 # LaTeX build artifacts
 *.aux
