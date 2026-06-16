@@ -31,15 +31,27 @@
         <el-table-column type="index" label="#" width="60" align="center" />
         <el-table-column :label="$t('goods.image')" width="120" align="center">
           <template #default="{ row }">
-            <el-image
-              v-if="row.imageUrl"
-              :src="row.imageUrl"
-              :preview-src-list="[row.imageUrl]"
-              fit="cover"
-              class="goods-image"
-              preview-teleported
-            />
-            <el-tag v-else type="info" size="small">{{ $t("goods.noImage") }}</el-tag>
+            <div class="goods-image-frame">
+              <el-image
+                v-if="hasGoodsImage(row.imageUrl)"
+                :src="goodsImageUrl(row.imageUrl)"
+                :preview-src-list="[goodsImageUrl(row.imageUrl)]"
+                fit="cover"
+                class="goods-image"
+                preview-teleported
+              >
+                <template #error>
+                  <div class="image-fallback">
+                    <el-icon><Picture /></el-icon>
+                    <span>{{ $t("goods.noImage") }}</span>
+                  </div>
+                </template>
+              </el-image>
+              <div v-else class="image-fallback">
+                <el-icon><Picture /></el-icon>
+                <span>{{ $t("goods.noImage") }}</span>
+              </div>
+            </div>
           </template>
         </el-table-column>
         <el-table-column prop="name" :label="$t('goods.name')" min-width="180" show-overflow-tooltip />
@@ -136,9 +148,35 @@
         </el-form-item>
 
         <el-form-item :label="$t('goods.category')" prop="categoryId">
-          <el-select v-model="formData.categoryId" :placeholder="$t('goods.categoryPlaceholder')" clearable style="width: 100%">
-            <el-option v-for="c in categoryList" :key="c.id" :label="c.name" :value="c.id" />
-          </el-select>
+          <div class="category-field">
+            <div class="category-select-line">
+              <el-select v-model="formData.categoryId" :placeholder="$t('goods.categoryPlaceholder')" clearable class="category-select">
+                <el-option v-for="c in categoryList" :key="c.id" :label="c.name" :value="c.id" />
+              </el-select>
+              <el-tooltip :content="$t('goods.quickCreateCategory')" placement="top">
+                <el-button :icon="Plus" @click="quickCategoryVisible = !quickCategoryVisible" />
+              </el-tooltip>
+            </div>
+            <div v-if="quickCategoryVisible" class="quick-category">
+              <el-input
+                v-model="quickCategoryForm.name"
+                :placeholder="$t('goods.quickCategoryPlaceholder')"
+                maxlength="30"
+                clearable
+                @keyup.enter="handleQuickCreateCategory"
+              />
+              <el-input-number
+                v-model="quickCategoryForm.sortOrder"
+                :min="0"
+                :max="999"
+                controls-position="right"
+                class="quick-category-sort"
+              />
+              <el-button type="primary" :icon="Check" :loading="quickCategoryLoading" @click="handleQuickCreateCategory">
+                {{ $t("goods.createCategory") }}
+              </el-button>
+            </div>
+          </div>
         </el-form-item>
 
         <el-form-item :label="$t('goods.image')" prop="imageUrl">
@@ -151,7 +189,14 @@
             :on-error="handleUploadError"
             accept="image/*"
           >
-            <el-image v-if="formData.imageUrl" :src="formData.imageUrl" fit="cover" class="upload-preview" />
+            <el-image v-if="hasGoodsImage(formData.imageUrl)" :src="goodsImageUrl(formData.imageUrl)" fit="cover" class="upload-preview">
+              <template #error>
+                <div class="upload-fallback">
+                  <el-icon :size="26"><Picture /></el-icon>
+                  <span>{{ $t("goods.noImage") }}</span>
+                </div>
+              </template>
+            </el-image>
             <div v-else class="upload-placeholder">
               <el-icon :size="28"><Plus /></el-icon>
               <span>{{ $t("goods.uploadImage") }}</span>
@@ -173,9 +218,9 @@
 import { computed, onMounted, reactive, ref } from "vue";
 import { useI18n } from "vue-i18n";
 import { ElMessage, ElMessageBox } from "element-plus";
-import { Search, Refresh, Plus, Edit, Delete } from "@element-plus/icons-vue";
+import { Search, Refresh, Plus, Edit, Delete, Picture, Check } from "@element-plus/icons-vue";
 import type { FormInstance, FormRules, UploadProps, UploadRawFile } from "element-plus";
-import { getGoodsPage, addGoods, updateGoods, deleteGoods, getCategories } from "@/api/modules/goods";
+import { getGoodsPage, addGoods, updateGoods, deleteGoods, getCategories, createCategory } from "@/api/modules/goods";
 import type { Goods } from "@/api/modules/goods";
 import { useUserStore } from "@/stores/modules/user";
 
@@ -195,6 +240,9 @@ const tableData = ref<Goods.GoodsItem[]>([]);
 const formRef = ref<FormInstance>();
 
 const categoryList = ref<Goods.CategoryItem[]>([]);
+const quickCategoryVisible = ref(false);
+const quickCategoryLoading = ref(false);
+const quickCategoryForm = reactive({ name: "", sortOrder: 0 });
 
 const searchForm = reactive<Goods.ReqGoodsParams & { categoryId?: number }>({
   page: 1,
@@ -284,6 +332,17 @@ const handleUploadError: UploadProps["onError"] = () => {
 const formatPrice = (price: number | string | null | undefined): string => {
   if (price === null || price === undefined || price === "") return "0.00";
   return Number(price).toFixed(2);
+};
+
+const hasGoodsImage = (url: string | null | undefined) => !!url && !!String(url).trim();
+
+const goodsImageUrl = (url: string | null | undefined) => {
+  const value = (url || "").trim();
+  if (!value) return "";
+  if (/^(https?:)?\/\//.test(value) || value.startsWith("data:") || value.startsWith("blob:")) {
+    return value;
+  }
+  return value;
 };
 
 /** 分类名称排序 */
@@ -377,6 +436,9 @@ const handleCurrentChange = (page: number) => {
 /** 重置表单数据到初始状态 */
 const resetFormData = () => {
   Object.assign(formData, { ...initFormData });
+  quickCategoryVisible.value = false;
+  quickCategoryForm.name = "";
+  quickCategoryForm.sortOrder = 0;
   formRef.value?.resetFields();
 };
 
@@ -439,6 +501,44 @@ const handleSubmit = async () => {
     console.error("保存商品失败:", error);
   } finally {
     submitLoading.value = false;
+  }
+};
+
+const handleQuickCreateCategory = async () => {
+  const name = quickCategoryForm.name.trim();
+  if (!name) {
+    ElMessage.warning(t("goods.quickCategoryPlaceholder"));
+    return;
+  }
+
+  const existing = categoryList.value.find(item => item.name === name);
+  if (existing) {
+    formData.categoryId = existing.id;
+    formRef.value?.clearValidate("categoryId");
+    quickCategoryVisible.value = false;
+    ElMessage.success(t("goods.categorySelected"));
+    return;
+  }
+
+  quickCategoryLoading.value = true;
+  try {
+    const res = await createCategory({
+      name,
+      sortOrder: quickCategoryForm.sortOrder,
+      status: 1
+    });
+    await loadCategories();
+    const createdId = res.data?.id ?? categoryList.value.find(item => item.name === name)?.id;
+    if (createdId) {
+      formData.categoryId = createdId;
+      formRef.value?.clearValidate("categoryId");
+    }
+    quickCategoryForm.name = "";
+    quickCategoryForm.sortOrder = 0;
+    quickCategoryVisible.value = false;
+    ElMessage.success(t("goods.createCategorySuccess"));
+  } finally {
+    quickCategoryLoading.value = false;
   }
 };
 
@@ -511,10 +611,32 @@ onMounted(() => {
   width: 100%;
 }
 
+.goods-image-frame {
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+}
+
 .goods-image {
   width: 56px;
   height: 56px;
   border-radius: 6px;
+}
+
+.image-fallback {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-radius: 6px;
+  border: 1px solid #dcdfe6;
+  background: #f5f7fa;
+  color: #909399;
+  font-size: 11px;
+  line-height: 1;
 }
 
 .price-text {
@@ -539,6 +661,19 @@ onMounted(() => {
 
 .upload-preview:hover {
   border-color: #409eff;
+}
+
+.upload-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  width: 100px;
+  height: 100px;
+  color: #909399;
+  background: #f5f7fa;
+  font-size: 12px;
 }
 
 .upload-placeholder {
@@ -571,5 +706,41 @@ onMounted(() => {
   margin-top: 8px;
   color: #909399;
   font-size: 12px;
+}
+
+.category-field {
+  width: 100%;
+}
+
+.category-select-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.category-select {
+  flex: 1;
+}
+
+.quick-category {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 104px auto;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quick-category-sort {
+  width: 104px;
+}
+
+@media (max-width: 640px) {
+  .quick-category {
+    grid-template-columns: 1fr;
+  }
+
+  .quick-category-sort {
+    width: 100%;
+  }
 }
 </style>

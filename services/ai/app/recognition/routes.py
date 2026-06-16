@@ -1,6 +1,7 @@
 """识别相关路由 —— 使用 best.pt YOLO 模型进行真实商品检测。"""
 
 import base64
+import os
 from io import BytesIO
 from typing import List
 
@@ -22,6 +23,13 @@ from app.config import GOODS_NAME_MAP
 from app.utils import decode_base64_image
 
 router = APIRouter(prefix="/api/ai/recognize", tags=["recognition"])
+
+
+def _shelf_conf_threshold() -> float:
+    try:
+        return max(0.05, min(float(os.getenv("SHELF_CONF_THRESHOLD", "0.35")), 0.95))
+    except ValueError:
+        return 0.35
 
 
 def _goods_id_from_class(class_id: int) -> int:
@@ -57,19 +65,19 @@ def recognize_center(req: CenterRecognizeRequest) -> List[CenterRecognizeRespons
 
 @router.post("/shelf/batch", response_model=List[ShelfBatchResult])
 def recognize_shelf_batch(items: List[ShelfBatchItem]) -> List[ShelfBatchResult]:
-    """对多台摄像头图像批量检测货架商品（仅返回置信度>=0.5的结果）。"""
+    """对多台摄像头图像批量检测货架商品（默认与标注预览使用相同阈值）。"""
     detector = get_detector()
     results: List[ShelfBatchResult] = []
-    CONF_THRESHOLD = 0.5  # 高置信度才更新货架，避免误识别
+    conf_threshold = _shelf_conf_threshold()
 
     for item in items:
         image = decode_base64_image(item.image_base64)
-        detections = detector.detect(image, conf_threshold=CONF_THRESHOLD)
+        detections = detector.detect(image, conf_threshold=conf_threshold)
 
         # 每个 class_id 只保留最高置信度
         best = {}
         for cls_id, conf, box in detections:
-            if conf >= CONF_THRESHOLD:
+            if conf >= conf_threshold:
                 gid = _goods_id_from_class(cls_id)
                 if gid not in best or conf > best[gid][0]:
                     best[gid] = (conf, gid)

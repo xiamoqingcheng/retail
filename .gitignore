@@ -51,6 +51,7 @@ dump.rdb
 
 # Large binary models
 *.pt
+!services/ai/best.pt
 *.onnx
 *.pth
 *.bin

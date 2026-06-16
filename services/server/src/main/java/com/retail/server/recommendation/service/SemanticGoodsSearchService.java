@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
@@ -195,7 +196,26 @@ public class SemanticGoodsSearchService {
         if (StringUtils.hasText(document.getCategoryName())) {
             sb.append(' ').append(document.getCategoryName());
         }
+        appendSemanticHints(sb, document);
         return sb.toString().trim();
+    }
+
+    private void appendSemanticHints(StringBuilder sb, GoodsSearchDocument document) {
+        String text = ((document.getName() == null ? "" : document.getName())
+                + " " + (document.getCategoryName() == null ? "" : document.getCategoryName()))
+                .toLowerCase(Locale.ROOT);
+
+        if (text.contains("方便面") || text.contains("牛肉面") || text.contains("合味道")
+                || text.contains("康师傅") || text.contains("五谷道场")) {
+            sb.append(" 泡面 杯面 速食 夜宵");
+        }
+        if (text.contains("口香糖") || text.contains("薄荷糖") || text.contains("炫迈")
+                || text.contains("绿箭") || text.contains("益达")) {
+            sb.append(" 清新口气 嚼的糖 清口糖");
+        }
+        if (text.contains("午餐肉") || text.contains("肉罐头")) {
+            sb.append(" 火腿肠 香肠 肉肠 即食肉 熟食肉");
+        }
     }
 
     private AppletSearchGoodsVO toVo(GoodsSearchDocument document, double score) {

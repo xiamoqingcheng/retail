@@ -137,6 +137,29 @@ class SemanticGoodsSearchEngineTest {
         assertFalse(resultIds.contains(403L));
     }
 
+    @Test
+    void sausageQueryFindsLunchMeatButNotInstantNoodles() {
+        List<GoodsSearchDocument> documents = List.of(
+                document(501L, "梅林午餐肉340g", 12L, "罐头"),
+                document(502L, "五谷道场红烧牛肉面100g", 7L, "方便面"),
+                document(503L, "盼盼烧烤牛排味块105g", 1L, "膨化食品")
+        );
+
+        List<Long> resultIds = engine.search(
+                        "火腿肠",
+                        documents,
+                        null,
+                        10,
+                        SemanticGoodsSearchEngine.DEFAULT_MIN_SCORE)
+                .stream()
+                .map(GoodsScoreCandidate::goodsId)
+                .toList();
+
+        assertTrue(resultIds.contains(501L));
+        assertFalse(resultIds.contains(502L));
+        assertFalse(resultIds.contains(503L));
+    }
+
     private GoodsSearchDocument document(Long id, String name, Long categoryId, String categoryName) {
         GoodsSearchDocument document = new GoodsSearchDocument();
         document.setId(id);

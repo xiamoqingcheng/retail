@@ -23,6 +23,7 @@ export namespace Goods {
     id: number;
     name: string;
     sortOrder: number;
+    status?: number;
   }
 
   /** 分页查询请求参数 */
@@ -86,4 +87,9 @@ export const uploadGoodsImage = (params: FormData) => {
 /** 查询所有分类 */
 export const getCategories = () => {
   return http.get<Goods.CategoryItem[]>("/api/goods/categories", {}, { loading: false });
+};
+
+/** 新增分类 */
+export const createCategory = (data: { name: string; sortOrder?: number; status?: number }) => {
+  return http.post<Goods.CategoryItem>("/api/admin/category", data);
 };

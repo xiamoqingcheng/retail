@@ -189,12 +189,13 @@ public class CameraScanScheduler {
     }
 
     @Transactional(rollbackFor = Exception.class)
-    public void applyShelfUpdates(Map<Long, List<Long>> goodsIdsByShelf, List<Long> cameraIds) {
+    public void applyShelfUpdates(Map<String, List<Long>> goodsIdsByShelf, List<Long> cameraIds) {
         int total = 0;
         for (var entry : goodsIdsByShelf.entrySet()) {
             List<Long> goodsIds = entry.getValue();
-            if (!goodsIds.isEmpty()) {
-                total += goodsMapper.batchUpdateShelfId(goodsIds, entry.getKey().toString());
+            String shelfId = entry.getKey();
+            if (!goodsIds.isEmpty() && StringUtils.hasText(shelfId)) {
+                total += goodsMapper.batchUpdateShelfId(goodsIds, shelfId);
             }
         }
         if (!cameraIds.isEmpty()) {
@@ -238,19 +239,17 @@ public class CameraScanScheduler {
         log.info("Python 批量识别返回结果: resultSize={}", results.size());
 
         // 收集每个货架对应的商品ID，通过事务方法批量更新
-        Map<Long, List<Long>> goodsIdsByShelf = new java.util.LinkedHashMap<>();
+        Map<String, List<Long>> goodsIdsByShelf = new java.util.LinkedHashMap<>();
         for (PythonBatchResponseItem result : results) {
             if (result == null || !StringUtils.hasText(result.cameraId())) continue;
             Camera matchedCamera = cameraByNo.get(result.cameraId());
             if (matchedCamera == null || !StringUtils.hasText(matchedCamera.getShelfId())) continue;
             List<Long> goodsIds = new ArrayList<>(normalizeGoodsIds(result.detectedGoodsIds()));
+            log.info("摄像头识别结果: cameraNo={}, shelfId={}, detectedGoodsIds={}",
+                    result.cameraId(), matchedCamera.getShelfId(), goodsIds);
             if (!goodsIds.isEmpty()) {
-                try {
-                    Long shelfKey = Long.parseLong(matchedCamera.getShelfId().replaceAll("[^0-9]", ""));
-                    goodsIdsByShelf.computeIfAbsent(shelfKey, k -> new ArrayList<>()).addAll(goodsIds);
-                } catch (NumberFormatException e) {
-                    goodsIdsByShelf.computeIfAbsent(0L, k -> new ArrayList<>()).addAll(goodsIds);
-                }
+                String shelfId = matchedCamera.getShelfId().trim();
+                goodsIdsByShelf.computeIfAbsent(shelfId, k -> new ArrayList<>()).addAll(goodsIds);
             }
         }
 

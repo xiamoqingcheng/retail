@@ -30,7 +30,7 @@ public class SemanticVectorClient {
     @Value("${ai.service-url:http://localhost:8000}")
     private String aiServiceUrl;
 
-    public SemanticVectorClient(@Qualifier("aiRecognitionRestTemplate") RestTemplate restTemplate) {
+    public SemanticVectorClient(@Qualifier("aiSemanticRestTemplate") RestTemplate restTemplate) {
         this.restTemplate = restTemplate;
     }
 

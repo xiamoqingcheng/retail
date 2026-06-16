@@ -7,7 +7,6 @@
 
       <el-table :data="tableData" border stripe v-loading="loading">
         <el-table-column type="index" label="#" width="60" align="center" />
-        <el-table-column prop="id" label="ID" width="80" align="center" />
         <el-table-column prop="name" label="分类名称" min-width="120" />
         <el-table-column prop="sortOrder" label="排序" width="80" align="center" />
         <el-table-column label="状态" width="100" align="center">

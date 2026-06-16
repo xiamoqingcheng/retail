@@ -7,7 +7,6 @@
 
       <el-table :data="tableData" border stripe v-loading="loading">
         <el-table-column type="index" label="#" width="60" align="center" />
-        <el-table-column prop="id" label="ID" width="80" align="center" />
         <el-table-column prop="username" :label="$t('info.username')" min-width="150" />
         <el-table-column :label="$t('info.role')" width="100" align="center">
           <template #default>

@@ -31,7 +31,7 @@ export function createVitePlugins(viteEnv: Record<string, any>): (PluginOption |
     vue(),
     vueJsx(),
     // <script setup name="xxx"> 语法支持
-    VueSetupExtend(),
+    VueSetupExtend({}),
     // index.html 中 <%- title %> 注入
     createHtmlPlugin({
       minify: true,

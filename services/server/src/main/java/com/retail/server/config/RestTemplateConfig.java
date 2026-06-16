@@ -32,4 +32,13 @@ public class RestTemplateConfig {
                 .setReadTimeout(Duration.ofSeconds(18))
                 .build();
     }
+
+    @Bean
+    @Qualifier("aiSemanticRestTemplate")
+    public RestTemplate aiSemanticRestTemplate(RestTemplateBuilder builder) {
+        return builder
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(120))
+                .build();
+    }
 }

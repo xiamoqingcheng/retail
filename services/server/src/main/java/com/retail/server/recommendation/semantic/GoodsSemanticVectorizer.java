@@ -65,6 +65,8 @@ public class GoodsSemanticVectorizer {
                 "糖果", "棒棒糖", "软糖", "硬糖", "奶糖"));
         CONCEPT_ALIASES.put("canned", List.of(
                 "罐头", "粥", "午餐肉", "椰浆", "鱼罐头", "银鹭"));
+        CONCEPT_ALIASES.put("prepared_meat", List.of(
+                "午餐肉", "火腿肠", "火腿", "香肠", "肉肠", "肉罐头", "即食肉"));
         CONCEPT_ALIASES.put("condiment", List.of(
                 "调味料", "酱油", "醋", "盐", "味精", "鸡精", "料酒", "辣椒", "火锅底料"));
         CONCEPT_ALIASES.put("hygiene", List.of(
