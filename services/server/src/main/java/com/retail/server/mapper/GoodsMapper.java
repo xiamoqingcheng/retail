@@ -27,10 +27,10 @@ public interface GoodsMapper extends BaseMapper<Goods> {
     @Update("UPDATE sys_goods SET shelf_id = #{shelfId} WHERE id = #{goodsId}")
     int updateShelfId(@Param("goodsId") Long goodsId, @Param("shelfId") String shelfId);
 
-    @Select("SELECT COUNT(*) FROM sys_goods WHERE status = 1")
+    @Select("SELECT COUNT(*) FROM sys_goods WHERE status = 1 AND deleted = 0")
     long countActiveGoods();
 
-    @Select("SELECT id FROM sys_goods WHERE status = 1 ORDER BY id LIMIT #{limit} OFFSET #{offset}")
+    @Select("SELECT id FROM sys_goods WHERE status = 1 AND deleted = 0 ORDER BY id LIMIT #{limit} OFFSET #{offset}")
     List<Long> selectGoodsIdsByOffset(@Param("limit") int limit, @Param("offset") int offset);
 
     @Select("""
@@ -39,7 +39,7 @@ public interface GoodsMapper extends BaseMapper<Goods> {
                    g.price, g.stock, g.shelf_id AS shelfId, g.image_url AS imageUrl
             FROM sys_goods g
             LEFT JOIN sys_goods_category c ON c.id = g.category_id
-            WHERE g.status = 1
+            WHERE g.status = 1 AND g.deleted = 0
             <if test='categoryId != null and categoryId &gt; 0'>
               AND g.category_id = #{categoryId}
             </if>
@@ -54,7 +54,7 @@ public interface GoodsMapper extends BaseMapper<Goods> {
                    g.price, g.stock, g.shelf_id AS shelfId, g.image_url AS imageUrl
             FROM sys_goods g
             LEFT JOIN sys_goods_category c ON c.id = g.category_id
-            WHERE g.status = 1
+            WHERE g.status = 1 AND g.deleted = 0
               AND g.id IN
               <foreach item='id' collection='ids' open='(' separator=',' close=')'>#{id}</foreach>
             </script>
