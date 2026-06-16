@@ -8,3 +8,7 @@ numpy==2.2.6
 opencv-python==4.11.0.86
 pillow==12.1.1
 ultralytics==8.3.0
+# 文本向量化（语义/混合检索）。torch 复用 ultralytics 已装版本；版本对齐本机已验证环境。
+sentence-transformers==5.5.1
+# 模型来源：HuggingFace 在国内常被墙，改用 ModelScope（魔搭）下载 embedding 模型。
+modelscope>=1.20

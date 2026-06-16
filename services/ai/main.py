@@ -9,6 +9,7 @@ from fastapi import FastAPI
 from app.camera.manager import camera_manager
 from app.camera.routes import router as camera_router
 from app.recognition.routes import router as recognition_router
+from app.semantic.routes import router as semantic_router
 
 
 @asynccontextmanager
@@ -21,6 +22,7 @@ app = FastAPI(title="retail-ai", version="1.0.0", lifespan=lifespan)
 
 app.include_router(camera_router)
 app.include_router(recognition_router)
+app.include_router(semantic_router)
 
 
 @app.get("/")
