@@ -1,4 +1,4 @@
-# 单独启动后端 API 服务（Spring Boot，端口 8080）。
+﻿# 单独启动后端 API 服务（Spring Boot，端口 8080）。
 # 可独立调试；总启动脚本 ..\..\start.ps1 也会复用本脚本。
 $ErrorActionPreference = "Stop"
 

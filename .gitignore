@@ -88,3 +88,12 @@ mock_data.sql
 TODO.md
 .claude/settings.local.json
 ~$*.docx
+
+# --- Re-include source files mistakenly caught by the generic rules above ---
+# `build/` (top of this file) targets build OUTPUT, but apps/admin-web/build/ holds
+# Vite SOURCE (getEnv/proxy/plugins) imported by vite.config.ts — keep it tracked.
+!apps/admin-web/build/
+!apps/admin-web/build/**
+# `.env.*` is for secrets, but the admin dev config (port 8848 + /api proxy) is shared,
+# non-secret project config — keep it tracked. Production env stays ignored.
+!apps/admin-web/.env.development

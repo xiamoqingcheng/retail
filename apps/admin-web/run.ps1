@@ -1,4 +1,4 @@
-# 单独启动管理端（Vite dev server，端口 8848）。
+﻿# 单独启动管理端（Vite dev server，端口 8848）。
 # 可独立调试；总启动脚本 ..\..\start.ps1 也会复用本脚本。
 $ErrorActionPreference = "Stop"
 

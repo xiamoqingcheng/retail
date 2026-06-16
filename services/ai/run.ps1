@@ -1,4 +1,4 @@
-# 单独启动 AI 服务（FastAPI/uvicorn，端口 8000）。
+﻿# 单独启动 AI 服务（FastAPI/uvicorn，端口 8000）。
 # 可独立调试；总启动脚本 ..\..\start.ps1 也会复用本脚本。
 # 覆盖 Python：设置环境变量 PYTHON_EXE 指向目标解释器。
 $ErrorActionPreference = "Stop"
