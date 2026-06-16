@@ -1,3 +1,4 @@
+<wxs src="../../utils/shelf.wxs" module="shelf" />
 <view class="scan-page">
 
   <!-- ================= 模式选择 ================= -->
@@ -126,7 +127,7 @@
               <text class="result-name">{{item.name}}</text>
               <view class="result-meta-row">
                 <view class="conf-tag">置信 {{item.confidenceText}}</view>
-                <text class="shelf-tag" wx:if="{{item.shelfId}}">货架 {{item.shelfId}}</text>
+                <text class="shelf-tag" wx:for="{{shelf.split(item.shelfId)}}" wx:for-item="sh" wx:key="*this">货架 {{sh}}</text>
               </view>
               <text class="result-price">¥{{item.formattedPrice}}</text>
             </view>
@@ -214,7 +215,7 @@
             <text class="result-name">{{item.name}}</text>
             <view class="result-meta-row">
               <view class="conf-tag">置信 {{item.confidenceText}}</view>
-              <text class="shelf-tag" wx:if="{{item.shelfId}}">货架 {{item.shelfId}}</text>
+              <text class="shelf-tag" wx:for="{{shelf.split(item.shelfId)}}" wx:for-item="sh" wx:key="*this">货架 {{sh}}</text>
             </view>
             <text class="result-price">¥{{item.formattedPrice}}</text>
           </view>

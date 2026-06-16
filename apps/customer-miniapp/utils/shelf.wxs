@@ -1,0 +1,29 @@
+// 货架字符串工具（WXS）：把「逗号分隔的多货架」拆成数组 / 拼成展示文本。
+// 商品在多个货架被识别到时，后端 goods.shelf_id 会写成 "SHELF-A,SHELF-B" 这样的逗号串。
+
+function trim(s) {
+  if (!s) return '';
+  return ('' + s).replace(getRegExp('^\\s+|\\s+$', 'g'), '');
+}
+
+function split(s) {
+  if (!s) return [];
+  var parts = ('' + s).split(',');
+  var out = [];
+  for (var i = 0; i < parts.length; i++) {
+    var t = trim(parts[i]);
+    if (t.length > 0) out.push(t);
+  }
+  return out;
+}
+
+function label(s) {
+  var arr = split(s);
+  if (arr.length === 0) return '-';
+  return arr.join('、');
+}
+
+module.exports = {
+  split: split,
+  label: label
+};

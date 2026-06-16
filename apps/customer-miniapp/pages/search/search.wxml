@@ -1,3 +1,4 @@
+<wxs src="../../utils/shelf.wxs" module="shelf" />
 <view class="container">
   <view class="search-header">
     <view class="search-box">
@@ -66,7 +67,7 @@
           <image class="goods-img" src="{{item.image}}" mode="aspectFill" bindtap="viewGoodsDetail" data-id="{{item.id}}"></image>
           <view class="goods-info">
             <text class="goods-name" bindtap="viewGoodsDetail" data-id="{{item.id}}">{{item.name}}</text>
-            <text class="goods-meta">货架 {{item.shelfId || '-'}}</text>
+            <text class="goods-meta">货架 {{shelf.label(item.shelfId)}}</text>
             <view class="goods-bottom flex-between">
               <text class="price">¥{{item.price}}</text>
               <view class="goods-actions">

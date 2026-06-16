@@ -19,4 +19,14 @@ public class TaskSchedulerConfig {
         scheduler.setAwaitTerminationSeconds(10);
         return scheduler;
     }
+
+    @Bean(name = "reportTaskScheduler")
+    public ThreadPoolTaskScheduler reportTaskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(2);
+        scheduler.setThreadNamePrefix("report-gen-");
+        scheduler.setWaitForTasksToCompleteOnShutdown(true);
+        scheduler.setAwaitTerminationSeconds(10);
+        return scheduler;
+    }
 }

@@ -52,7 +52,7 @@ CREATE TABLE `sys_goods` (
   `price`        DECIMAL(10,2)    NOT NULL DEFAULT 0.00 COMMENT '商品价格',
   `stock`        INT              NOT NULL DEFAULT 0 COMMENT '库存数量',
   `safe_stock`   INT              NOT NULL DEFAULT 10 COMMENT '安全库存阈值',
-  `shelf_id`     VARCHAR(64)      NOT NULL COMMENT '货架编号',
+  `shelf_id`     VARCHAR(255)     NOT NULL COMMENT '货架编号(可逗号分隔多货架)',
   `image_url`    VARCHAR(255)     DEFAULT NULL COMMENT '商品图片URL',
   `status`       TINYINT          NOT NULL DEFAULT 1 COMMENT '状态(1上架/0下架)',
   `deleted`      TINYINT          NOT NULL DEFAULT 0 COMMENT '逻辑删除(0未删除/1已删除)',
@@ -226,6 +226,39 @@ CREATE TABLE `sys_camera` (
   UNIQUE KEY `uk_camera_no` (`camera_no`),
   KEY `idx_camera_status` (`status`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='摄像头管理表';
+
+-- ---------------------------
+-- 13. 定时报表调度配置表（单行，持久化＝记忆性）
+-- ---------------------------
+DROP TABLE IF EXISTS `sys_report_schedule`;
+CREATE TABLE `sys_report_schedule` (
+  `id`               BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `enabled`          TINYINT          NOT NULL DEFAULT 0 COMMENT '是否启用定时生成(0否/1是)',
+  `interval_days`    INT              NOT NULL DEFAULT 1 COMMENT '生成间隔-天',
+  `interval_hours`   INT              NOT NULL DEFAULT 0 COMMENT '生成间隔-时',
+  `interval_minutes` INT              NOT NULL DEFAULT 0 COMMENT '生成间隔-分',
+  `last_run_time`    DATETIME         NULL COMMENT '上次生成时间',
+  `next_run_time`    DATETIME         NULL COMMENT '下次生成时间',
+  `update_time`      DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='定时报表调度配置表';
+
+-- ---------------------------
+-- 14. 销售报表记录表（保存报表内容快照，供回看/导出）
+-- ---------------------------
+DROP TABLE IF EXISTS `sys_report`;
+CREATE TABLE `sys_report` (
+  `id`           BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `title`        VARCHAR(255)     NOT NULL COMMENT '报表标题',
+  `report_type`  VARCHAR(16)      NOT NULL DEFAULT 'MANUAL' COMMENT '生成方式(SCHEDULED/MANUAL)',
+  `period_start` DATETIME         NOT NULL COMMENT '统计区间起',
+  `period_end`   DATETIME         NOT NULL COMMENT '统计区间止',
+  `content_json` LONGTEXT         NOT NULL COMMENT '报表内容JSON快照',
+  `create_time`  DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_report_create_time` (`create_time`),
+  KEY `idx_report_type_time` (`report_type`, `create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售报表记录表';
 
 -- ======================================================
 -- 初始数据

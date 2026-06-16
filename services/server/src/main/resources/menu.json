@@ -70,6 +70,20 @@
     }
   },
   {
+    "path": "/report/schedule",
+    "name": "reportSchedule",
+    "component": "/report/schedule/index",
+    "meta": {
+      "icon": "TrendCharts",
+      "title": "定时报表",
+      "isLink": "",
+      "isHide": false,
+      "isFull": false,
+      "isAffix": false,
+      "isKeepAlive": true
+    }
+  },
+  {
     "path": "/inventory/log",
     "name": "inventoryLog",
     "component": "/inventory/log/index",

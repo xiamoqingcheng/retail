@@ -7,6 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 
@@ -60,4 +61,49 @@ public interface OrderItemMapper extends BaseMapper<OrderItem> {
             ORDER BY quantity DESC
             """)
     List<Map<String, Object>> selectCategorySalesTop7();
+
+    /**
+     * 报表区间按商品销量/销售额明细（半开区间 [start, end)，排除已取消订单）。
+     */
+    @Select("""
+            SELECT oi.goods_id AS goodsId, g.name AS name, COALESCE(c.name, '未分类') AS categoryName,
+                   SUM(oi.quantity) AS quantity, SUM(oi.price * oi.quantity) AS amount
+            FROM sys_order_item oi
+            JOIN sys_order o ON o.id = oi.order_id
+            JOIN sys_goods g ON g.id = oi.goods_id
+            LEFT JOIN sys_goods_category c ON c.id = g.category_id
+            WHERE o.status <> 'CANCELLED' AND o.create_time >= #{start} AND o.create_time < #{end}
+            GROUP BY oi.goods_id, g.name, c.name
+            ORDER BY quantity DESC
+            """)
+    List<Map<String, Object>> selectGoodsSalesInRange(@Param("start") LocalDateTime start,
+                                                      @Param("end") LocalDateTime end);
+
+    /**
+     * 报表区间按分类销量/销售额（排除已取消订单）。
+     */
+    @Select("""
+            SELECT COALESCE(c.name, '未分类') AS name, SUM(oi.quantity) AS quantity,
+                   SUM(oi.price * oi.quantity) AS amount
+            FROM sys_order_item oi
+            JOIN sys_order o ON o.id = oi.order_id
+            JOIN sys_goods g ON g.id = oi.goods_id
+            LEFT JOIN sys_goods_category c ON c.id = g.category_id
+            WHERE o.status <> 'CANCELLED' AND o.create_time >= #{start} AND o.create_time < #{end}
+            GROUP BY c.name
+            ORDER BY quantity DESC
+            """)
+    List<Map<String, Object>> selectCategorySalesInRange(@Param("start") LocalDateTime start,
+                                                         @Param("end") LocalDateTime end);
+
+    /**
+     * 报表区间商品销售总件数（排除已取消订单），用于环比计算。
+     */
+    @Select("""
+            SELECT COALESCE(SUM(oi.quantity), 0)
+            FROM sys_order_item oi
+            JOIN sys_order o ON o.id = oi.order_id
+            WHERE o.status <> 'CANCELLED' AND o.create_time >= #{start} AND o.create_time < #{end}
+            """)
+    Long selectUnitsInRange(@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
 }

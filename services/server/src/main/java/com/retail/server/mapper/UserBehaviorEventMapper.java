@@ -9,10 +9,24 @@ import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 @Mapper
 public interface UserBehaviorEventMapper extends BaseMapper<UserBehaviorEvent> {
+
+    /**
+     * 报表区间内按事件类型统计行为数量（半开区间 [start, end)）。
+     */
+    @Select("""
+            SELECT event_type AS type, COUNT(*) AS cnt, COALESCE(SUM(quantity), 0) AS qty
+            FROM sys_user_behavior_event
+            WHERE create_time >= #{start} AND create_time < #{end}
+            GROUP BY event_type
+            """)
+    List<Map<String, Object>> countByTypeInRange(@Param("start") LocalDateTime start,
+                                                 @Param("end") LocalDateTime end);
 
     @Select("""
             SELECT goods_id AS goodsId,

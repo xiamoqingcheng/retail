@@ -18,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.RestClientException;
@@ -30,9 +29,12 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeSet;
 import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
@@ -123,12 +125,13 @@ public class CameraScanScheduler {
     }
 
     /**
-     * 手动立即触发一次全量扫描。
+     * 手动立即触发一次全量扫描，返回本次扫描摘要。
      */
-    public void triggerNow() {
+    public ScanResult triggerNow() {
         log.info("收到手动触发全量巡检请求");
-        executeScanBatchTask();
-        log.info("手动触发全量巡检执行完成");
+        ScanResult result = executeScanBatchTask();
+        log.info("手动触发全量巡检执行完成: {}", result);
+        return result;
     }
 
     /**
@@ -141,14 +144,20 @@ public class CameraScanScheduler {
     }
 
     /**
-     * 核心执行逻辑：分批扫描摄像头并同步货架结果。
+     * 核心执行逻辑：分批扫描摄像头，跨批次聚合「商品 → 所在货架集合」，
+     * 支持同一商品出现在多个货架时把这些货架一并记录，最后统一落库并返回扫描摘要。
      */
-    public void executeScanBatchTask() {
+    public ScanResult executeScanBatchTask() {
         log.info("开始执行摄像头巡检任务");
+        long startMillis = System.currentTimeMillis();
+        LocalDateTime startTime = LocalDateTime.now();
+
         List<Camera> cameras = listNormalCameras();
+        ScanAccumulator acc = new ScanAccumulator();
+        acc.totalCameras = cameras.size();
         if (CollectionUtils.isEmpty(cameras)) {
             log.info("摄像头巡检跳过：无可用正常摄像头");
-            return;
+            return buildScanResult(acc, startTime, startMillis, 0);
         }
 
         int currentBatchSize = batchSize == null ? 10 : batchSize;
@@ -159,10 +168,37 @@ public class CameraScanScheduler {
         List<List<Camera>> batches = splitBatches(cameras, currentBatchSize);
         log.info("摄像头巡检批次划分完成: totalCameras={}, batchSize={}, batches={}", cameras.size(), currentBatchSize, batches.size());
         for (List<Camera> batch : batches) {
-            processBatch(batch);
+            processBatch(batch, acc);
         }
 
-        log.info("摄像头巡检完成: cameras={}, batchSize={}, batches={}", cameras.size(), currentBatchSize, batches.size());
+        // 统一落库：商品多货架（逗号串）+ 摄像头巡检时间（两步互不影响）
+        int updatedGoods = applyGoodsShelves(acc.shelvesByGoods);
+        touchCamerasScanned(acc.capturedCameraIds);
+
+        ScanResult result = buildScanResult(acc, startTime, startMillis, updatedGoods);
+        log.info("摄像头巡检完成: {}", result);
+        return result;
+    }
+
+    private ScanResult buildScanResult(ScanAccumulator acc, LocalDateTime startTime, long startMillis, int updatedGoods) {
+        Set<String> shelves = new HashSet<>();
+        int multiShelfGoods = 0;
+        for (Set<String> goodsShelves : acc.shelvesByGoods.values()) {
+            shelves.addAll(goodsShelves);
+            if (goodsShelves.size() > 1) {
+                multiShelfGoods++;
+            }
+        }
+        return new ScanResult(
+                acc.totalCameras,
+                acc.capturedFrames,
+                acc.unavailableCameras,
+                acc.shelvesByGoods.size(),
+                updatedGoods,
+                shelves.size(),
+                multiShelfGoods,
+                startTime,
+                System.currentTimeMillis() - startMillis);
     }
 
     private List<Camera> listNormalCameras() {
@@ -188,25 +224,53 @@ public class CameraScanScheduler {
         return cameraCaptureService.captureFrame(cameraNo);
     }
 
-    @Transactional(rollbackFor = Exception.class)
-    public void applyShelfUpdates(Map<String, List<Long>> goodsIdsByShelf, List<Long> cameraIds) {
-        int total = 0;
-        for (var entry : goodsIdsByShelf.entrySet()) {
-            List<Long> goodsIds = entry.getValue();
-            String shelfId = entry.getKey();
-            if (!goodsIds.isEmpty() && StringUtils.hasText(shelfId)) {
-                total += goodsMapper.batchUpdateShelfId(goodsIds, shelfId);
+    /**
+     * 将「商品 → 货架集合」写回 sys_goods.shelf_id（多货架用逗号串表达）。
+     * 仅重写本次被识别到的商品；未被任何摄像头识别到的商品保留原值不动。
+     * 按「相同货架组合」分组，复用 batchUpdateShelfId 减少 SQL 次数。
+     */
+    public int applyGoodsShelves(Map<Long, Set<String>> shelvesByGoods) {
+        if (shelvesByGoods.isEmpty()) {
+            return 0;
+        }
+        Map<String, List<Long>> goodsByShelfKey = new LinkedHashMap<>();
+        for (Map.Entry<Long, Set<String>> entry : shelvesByGoods.entrySet()) {
+            Long goodsId = entry.getKey();
+            if (goodsId == null || goodsId <= 0 || entry.getValue().isEmpty()) {
+                continue;
+            }
+            String joined = String.join(",", entry.getValue());
+            goodsByShelfKey.computeIfAbsent(joined, k -> new ArrayList<>()).add(goodsId);
+        }
+        int updated = 0;
+        for (Map.Entry<String, List<Long>> entry : goodsByShelfKey.entrySet()) {
+            if (StringUtils.hasText(entry.getKey()) && !entry.getValue().isEmpty()) {
+                updated += goodsMapper.batchUpdateShelfId(entry.getValue(), entry.getKey());
             }
         }
-        if (!cameraIds.isEmpty()) {
+        log.info("商品货架批量更新完成: goods={}, shelfGroups={}, updatedRows={}",
+                shelvesByGoods.size(), goodsByShelfKey.size(), updated);
+        return updated;
+    }
+
+    /**
+     * 刷新已成功截帧摄像头的巡检时间。与商品货架更新分离，
+     * 即使此处失败也不影响已写入的货架结果。
+     */
+    public void touchCamerasScanned(List<Long> cameraIds) {
+        if (CollectionUtils.isEmpty(cameraIds)) {
+            return;
+        }
+        try {
             cameraMapper.update(null, new LambdaUpdateWrapper<Camera>()
                     .in(Camera::getId, cameraIds)
                     .set(Camera::getLastScanTime, LocalDateTime.now()));
+        } catch (Exception ex) {
+            log.warn("更新摄像头巡检时间失败(不影响货架更新): {}", ex.getMessage());
         }
-        log.info("货架绑定批量更新完成: updatedShelves={}, updatedRows={}", goodsIdsByShelf.size(), total);
     }
 
-    private void processBatch(List<Camera> batch) {
+    private void processBatch(List<Camera> batch, ScanAccumulator acc) {
         if (CollectionUtils.isEmpty(batch)) {
             return;
         }
@@ -222,8 +286,13 @@ public class CameraScanScheduler {
             // 从摄像头实时流中截取一帧用于识别
             String frameBase64 = captureFrame(camera.getCameraNo());
             if (frameBase64 == null) {
+                acc.unavailableCameras++;
                 handleUnavailableCamera(camera);
                 continue;
+            }
+            acc.capturedFrames++;
+            if (camera.getId() != null) {
+                acc.capturedCameraIds.add(camera.getId());
             }
             payload.add(new PythonBatchRequestItem(camera.getCameraNo(), frameBase64));
         }
@@ -238,27 +307,41 @@ public class CameraScanScheduler {
         List<PythonBatchResponseItem> results = callPythonShelfBatch(payload);
         log.info("Python 批量识别返回结果: resultSize={}", results.size());
 
-        // 收集每个货架对应的商品ID，通过事务方法批量更新
-        Map<String, List<Long>> goodsIdsByShelf = new java.util.LinkedHashMap<>();
+        // 跨批次聚合「商品 → 所在货架集合」：同一商品被多个货架(摄像头)识别到时合并记录
         for (PythonBatchResponseItem result : results) {
             if (result == null || !StringUtils.hasText(result.cameraId())) continue;
             Camera matchedCamera = cameraByNo.get(result.cameraId());
             if (matchedCamera == null || !StringUtils.hasText(matchedCamera.getShelfId())) continue;
-            List<Long> goodsIds = new ArrayList<>(normalizeGoodsIds(result.detectedGoodsIds()));
+
+            Set<String> shelvesOfCamera = splitShelfIds(matchedCamera.getShelfId());
+            if (shelvesOfCamera.isEmpty()) continue;
+
+            Set<Long> goodsIds = normalizeGoodsIds(result.detectedGoodsIds());
             log.info("摄像头识别结果: cameraNo={}, shelfId={}, detectedGoodsIds={}",
                     result.cameraId(), matchedCamera.getShelfId(), goodsIds);
-            if (!goodsIds.isEmpty()) {
-                String shelfId = matchedCamera.getShelfId().trim();
-                goodsIdsByShelf.computeIfAbsent(shelfId, k -> new ArrayList<>()).addAll(goodsIds);
+            for (Long goodsId : goodsIds) {
+                acc.shelvesByGoods.computeIfAbsent(goodsId, k -> new TreeSet<>()).addAll(shelvesOfCamera);
             }
         }
 
-        List<Long> cameraIds = batch.stream().map(Camera::getId).filter(id -> id != null).toList();
-        if (!goodsIdsByShelf.isEmpty() || !cameraIds.isEmpty()) {
-            applyShelfUpdates(goodsIdsByShelf, cameraIds);
-        }
+        log.info("摄像头批次处理完成: payloadSize={}, goodsAggregated={}", payload.size(), acc.shelvesByGoods.size());
+    }
 
-        log.info("摄像头批次处理完成: payloadSize={}, shelvesUpdated={}", payload.size(), goodsIdsByShelf.size());
+    /**
+     * 摄像头绑定货架字符串拆分为货架集合（一般为单货架，兼容逗号分隔的多货架绑定）。
+     */
+    private Set<String> splitShelfIds(String shelfIdText) {
+        Set<String> shelves = new TreeSet<>();
+        if (!StringUtils.hasText(shelfIdText)) {
+            return shelves;
+        }
+        for (String part : shelfIdText.split(",")) {
+            String trimmed = part.trim();
+            if (StringUtils.hasText(trimmed)) {
+                shelves.add(trimmed);
+            }
+        }
+        return shelves;
     }
 
     private void handleUnavailableCamera(Camera camera) {
@@ -346,6 +429,41 @@ public class CameraScanScheduler {
     }
 
     public record SchedulerConfig(Integer intervalMinutes, Integer batchSize) {
+    }
+
+    /**
+     * 全量扫描摘要，回传前端用于展示「本次扫描具体做了什么」。
+     *
+     * @param totalCameras       参与本次扫描的正常摄像头总数
+     * @param capturedFrames     成功截帧的摄像头数
+     * @param unavailableCameras 截帧失败/不可用的摄像头数
+     * @param recognizedGoods    本次识别到的去重商品数
+     * @param updatedGoods       实际更新货架的商品行数
+     * @param updatedShelves     本次涉及的去重货架数
+     * @param multiShelfGoods    被识别到分布在多个货架上的商品数
+     * @param startTime          扫描开始时间
+     * @param costMillis         耗时（毫秒）
+     */
+    public record ScanResult(
+            int totalCameras,
+            int capturedFrames,
+            int unavailableCameras,
+            int recognizedGoods,
+            int updatedGoods,
+            int updatedShelves,
+            int multiShelfGoods,
+            LocalDateTime startTime,
+            long costMillis
+    ) {
+    }
+
+    /** 单次全量扫描的可变累加器（跨批次聚合商品与货架）。 */
+    private static final class ScanAccumulator {
+        private int totalCameras;
+        private int capturedFrames;
+        private int unavailableCameras;
+        private final Map<Long, Set<String>> shelvesByGoods = new HashMap<>();
+        private final List<Long> capturedCameraIds = new ArrayList<>();
     }
 
     private record PythonBatchRequestItem(

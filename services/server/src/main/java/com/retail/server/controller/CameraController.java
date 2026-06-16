@@ -368,10 +368,10 @@ public class CameraController {
      * 手动触发一次全量扫描。
      */
     @PostMapping("/scheduler/trigger")
-    public Result<Void> triggerScheduler() {
+    public Result<CameraScanScheduler.ScanResult> triggerScheduler() {
         log.info("收到手动触发全量巡检接口请求");
-        cameraScanScheduler.triggerNow();
-        return Result.success("触发成功", null);
+        CameraScanScheduler.ScanResult result = cameraScanScheduler.triggerNow();
+        return Result.success("触发成功", result);
     }
 
     /**

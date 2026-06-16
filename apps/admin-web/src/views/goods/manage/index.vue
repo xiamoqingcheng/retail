@@ -78,7 +78,14 @@
             {{ categoryList.find(c => c.id === row.categoryId)?.name || "-" }}
           </template>
         </el-table-column>
-        <el-table-column prop="shelfId" :label="$t('goods.shelfId')" width="130" align="center" sortable="custom" />
+        <el-table-column prop="shelfId" :label="$t('goods.shelfId')" min-width="150" align="center" sortable="custom">
+          <template #default="{ row }">
+            <template v-if="splitShelves(row.shelfId).length">
+              <el-tag v-for="s in splitShelves(row.shelfId)" :key="s" size="small" class="shelf-tag">{{ s }}</el-tag>
+            </template>
+            <span v-else>-</span>
+          </template>
+        </el-table-column>
         <el-table-column :label="$t('goods.operation')" width="180" fixed="right" align="center">
           <template #default="{ row }">
             <el-button type="primary" link :icon="Edit" @click="openEditDialog(row)">{{ $t("goods.edit") }}</el-button>
@@ -144,7 +151,7 @@
         </el-form-item>
 
         <el-form-item :label="$t('goods.shelfId')" prop="shelfId">
-          <el-input v-model="formData.shelfId" :placeholder="$t('goods.shelfPlaceholder')" maxlength="50" />
+          <el-input v-model="formData.shelfId" :placeholder="$t('goods.shelfPlaceholder')" maxlength="255" />
         </el-form-item>
 
         <el-form-item :label="$t('goods.category')" prop="categoryId">
@@ -350,6 +357,15 @@ const categorySort = (a: Goods.GoodsItem, b: Goods.GoodsItem) => {
   const nameA = categoryList.value.find(c => c.id === a.categoryId)?.name || "";
   const nameB = categoryList.value.find(c => c.id === b.categoryId)?.name || "";
   return nameA.localeCompare(nameB, "zh");
+};
+
+// 货架号可能是「逗号分隔的多货架」（由全量扫描识别同一商品在多个货架时写入），拆分为标签展示
+const splitShelves = (shelfId?: string | null): string[] => {
+  if (!shelfId) return [];
+  return String(shelfId)
+    .split(",")
+    .map(s => s.trim())
+    .filter(Boolean);
 };
 
 // ======================== 数据加载 ========================
@@ -594,6 +610,10 @@ onMounted(() => {
 .goods-page {
   padding: 0;
   background: transparent;
+}
+
+.shelf-tag {
+  margin: 2px;
 }
 
 .search-form {

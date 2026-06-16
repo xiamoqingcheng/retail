@@ -384,12 +384,38 @@ const handleTriggerNow = async () => {
       ElMessage.error(res?.message || res?.msg || t("camera.triggerFailed"));
       return;
     }
-    ElMessage.success(t("camera.triggerSuccess"));
+    showScanResult(res?.data);
+    await loadCameraList();
   } catch (error: any) {
     ElMessage.error(error?.response?.data?.message || error?.message || t("camera.triggerFailed"));
   } finally {
     triggering.value = false;
   }
+};
+
+const showScanResult = (data: any) => {
+  if (!data) {
+    ElMessage.success(t("camera.triggerSuccess"));
+    return;
+  }
+  const rows = [
+    `${t("camera.scanCameras")}：${data.totalCameras ?? 0}`,
+    `${t("camera.scanCaptured")}：${data.capturedFrames ?? 0}`,
+    `${t("camera.scanUnavailable")}：${data.unavailableCameras ?? 0}`,
+    `${t("camera.scanRecognized")}：${data.recognizedGoods ?? 0}`,
+    `${t("camera.scanUpdatedGoods")}：${data.updatedGoods ?? 0}`,
+    `${t("camera.scanUpdatedShelves")}：${data.updatedShelves ?? 0}`,
+    `${t("camera.scanMultiShelf")}：${data.multiShelfGoods ?? 0}`,
+    `${t("camera.scanCost")}：${data.costMillis ?? 0} ms`
+  ];
+  const tip =
+    Number(data.capturedFrames ?? 0) === 0
+      ? `<p style="color:#e6a23c;margin-top:10px">${t("camera.scanNoCamera")}</p>`
+      : "";
+  ElMessageBox.alert(`<div style="line-height:1.9">${rows.map(r => `<div>${r}</div>`).join("")}${tip}</div>`, t("camera.triggerResultTitle"), {
+    dangerouslyUseHTMLString: true,
+    confirmButtonText: t("camera.close")
+  });
 };
 
 const openEditDialog = (row: CameraRow) => {
