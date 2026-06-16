@@ -33,7 +33,8 @@ venv/
 Thumbs.db
 
 # Logs
-log/
+retail/log/
+retail/retail-server/log/
 *.log
 .codex-runtime/
 
