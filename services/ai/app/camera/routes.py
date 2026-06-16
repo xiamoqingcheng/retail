@@ -50,6 +50,10 @@ def get_camera_frame(camera_index: int) -> dict:
 def _mjpeg_generator(camera_index: int):
     """生成 MJPEG 帧的同步生成器，退出时自动释放引用。"""
     interval = 1.0 / STREAM_FPS_LIMIT
+    # 丢弃可能残留的旧缓冲帧：重开预览时若复用了上一次的摄像头句柄，
+    # 第一帧可能是关闭前的旧帧，先抓取并丢弃数帧，保证首帧为实时画面。
+    for _ in range(3):
+        camera_manager.read_frame(camera_index)
     try:
         while True:
             ok, frame = camera_manager.read_frame(camera_index)

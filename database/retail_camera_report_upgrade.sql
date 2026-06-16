@@ -65,3 +65,25 @@ CREATE TABLE IF NOT EXISTS `sys_report` (
   KEY `idx_report_create_time` (`create_time`),
   KEY `idx_report_type_time` (`report_type`, `create_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='销售报表记录表';
+
+-- 5) 用户反馈表（旧库可能整张缺失，导致 /feedback/manage 反复弹「服务器内部异常」）
+CREATE TABLE IF NOT EXISTS `sys_feedback` (
+  `id`              BIGINT UNSIGNED  NOT NULL AUTO_INCREMENT COMMENT '反馈ID',
+  `user_id`         BIGINT UNSIGNED  DEFAULT NULL COMMENT '小程序用户ID',
+  `feedback_type`   VARCHAR(32)      NOT NULL DEFAULT 'OTHER' COMMENT '反馈类型',
+  `content`         VARCHAR(1000)    NOT NULL COMMENT '反馈内容',
+  `contact`         VARCHAR(128)     DEFAULT NULL COMMENT '联系方式',
+  `api_base_url`    VARCHAR(255)     DEFAULT NULL COMMENT '小程序当前API地址',
+  `system_info`     VARCHAR(255)     DEFAULT NULL COMMENT '设备系统信息',
+  `diagnostic_info` TEXT             DEFAULT NULL COMMENT '诊断信息',
+  `status`          VARCHAR(32)      NOT NULL DEFAULT 'PENDING' COMMENT '状态(PENDING/PROCESSING/RESOLVED/CLOSED)',
+  `reply`           VARCHAR(500)     DEFAULT NULL COMMENT '处理回复',
+  `create_time`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
+  `update_time`     DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
+  `resolved_time`   DATETIME         DEFAULT NULL COMMENT '处理完成时间',
+  PRIMARY KEY (`id`),
+  KEY `idx_feedback_status` (`status`),
+  KEY `idx_feedback_type` (`feedback_type`),
+  KEY `idx_feedback_user_id` (`user_id`),
+  KEY `idx_feedback_create_time` (`create_time`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci COMMENT='用户反馈表';

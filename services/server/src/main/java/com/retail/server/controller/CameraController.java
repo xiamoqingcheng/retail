@@ -196,6 +196,14 @@ public class CameraController {
             throw new BusinessException(404, "摄像头不存在");
         }
 
+        // 切换为「运行」状态前，先检测摄像头是否有画面响应；无响应则拒绝切换，保持离线。
+        if (status == 1) {
+            String frame = cameraCaptureService.captureFrame(camera.getCameraNo());
+            if (!StringUtils.hasText(frame)) {
+                throw new BusinessException(409, "摄像头无画面响应，无法切换为运行状态，请检查摄像头连接或 AI 识别服务是否已启动");
+            }
+        }
+
         camera.setStatus(status);
         int affected = cameraService.update(camera);
         if (affected != 1) {

@@ -744,7 +744,9 @@ const handleRowClick = (row: CameraRow) => {
   previewShelfId.value = row.shelfId || "";
   const params = new URLSearchParams({
     cameraNo: row.cameraNo,
-    token: userStore.token || ""
+    token: userStore.token || "",
+    // 每次打开都用唯一参数，避免浏览器复用上一次 MJPEG 连接而定格在关闭前的旧帧
+    _t: String(Date.now())
   });
   previewStreamUrl.value = `/api/admin/camera/stream?${params.toString()}`;
   previewDialogVisible.value = true;
